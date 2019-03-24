@@ -1,49 +1,64 @@
 import database.ConnectionManager;
-import database.models.Business;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.queryparser.classic.ParseException;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.io.IOException;
 import java.sql.SQLException;
-
-import static database.Utilities.nextBusiness;
+import java.util.List;
+import java.util.Scanner;
 
 public class Server {
     private ConnectionManager cm;
+    private LuceneWrapper luc;
 
-    public Server() throws SQLException {
+    public Server() throws SQLException, IOException {
         cm = new ConnectionManager(
                 "jdbc:postgresql://192.168.0.10:5432/biznasearch",
                 "sysdba",
                 "masterkey"
         );
+
+        luc = new LuceneWrapper("/tmp/testindex");
+        luc.loadBusinesses(cm.getConnection());
     }
 
-    public void stop() throws SQLException {
-        cm.closeConnection();
+    private void searchBusinesses(String query) throws IOException, ParseException {
+        long start = System.currentTimeMillis();
+        List<Document> docs = luc.searchBusinesses(query);
+        long elapsedTimeMillis = System.currentTimeMillis()-start;
+
+        System.out.println(">>> " + docs.size() + " results in " + elapsedTimeMillis + "ms");
+
+        for (Document doc: docs) {
+            System.out.println(doc.get("business_name") + " " + doc.get("business_id"));
+        }
     }
 
-    public void indexBusinesses() throws SQLException {
-        /** loop through businesses */
-        Business business;
-        String query = "SELECT * FROM businesses";
+    public void simulate() throws IOException, ParseException {
+        Scanner inp = new Scanner(System.in);
 
-        PreparedStatement pst = cm.getConnection().prepareStatement(query);
-        ResultSet rs = pst.executeQuery();
-
-        business = nextBusiness(rs);
-        while(business != null) {
-            System.out.println(business.getLat());
-            business = nextBusiness(rs);
+        String query = "";
+        while (!query.equals("/exit")) {
+            System.out.print("Give query or /exit: ");
+            query = inp.nextLine();
+            if (!query.equals("/exit")) {
+                this.searchBusinesses(query);
+            }
         }
     }
 
     public static void main(String[] args) {
         try {
             Server server = new Server();
-            server.indexBusinesses();
+            server.simulate();
+
             server.stop();
-        } catch (SQLException e) {
+        } catch (SQLException | IOException | ParseException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    public void stop() throws SQLException {
+        cm.closeConnection();
     }
 }
