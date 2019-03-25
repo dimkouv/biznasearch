@@ -1,4 +1,4 @@
-package database.models;
+package biznasearch.models;
 
 public class Business {
     private String id;
