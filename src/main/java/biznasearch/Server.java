@@ -59,7 +59,7 @@ public class Server {
          * --------------
          * query - A query for the businesses
          */
-        get("/businesses", (req, res) -> {
+        get("/businesses", (req, res) -> { //"show.hmtl");
             res.type("application/json");
             return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10);
         });
