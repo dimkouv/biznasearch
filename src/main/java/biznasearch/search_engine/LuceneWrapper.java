@@ -45,7 +45,7 @@ public class LuceneWrapper {
     }
 
     public void startIndexing() throws SQLException, IOException {
-        //indexBusinesses();
+        indexBusinesses();
     }
 
     private void indexBusinesses() throws IOException, SQLException {
@@ -111,7 +111,7 @@ public class LuceneWrapper {
         }
 
         if (businessIDs.size() == 0) {
-            return new ArrayList<Business>();
+            return new ArrayList<>();
         }
         /* Find businesses by their IDs and return them */
         return Getters.businessesByIDs(dbConnection, businessIDs);

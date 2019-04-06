@@ -7,11 +7,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://192.168.0.10:5432/postgres</jdbc-url>
     </data-source>
-    <data-source source="LOCAL" name="biznasearch@192.168.0.10" uuid="ff5944ff-6a5e-4901-9295-1ce0e11b5366">
+    <data-source source="LOCAL" name="biznasearch@127.0.0.1" uuid="ff5944ff-6a5e-4901-9295-1ce0e11b5366">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://192.168.0.10:5432/biznasearch</jdbc-url>
+      <jdbc-url>jdbc:postgresql://127.0.0.1:5432/biznasearch</jdbc-url>
     </data-source>
   </component>
 </project>
