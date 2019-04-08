@@ -10,8 +10,9 @@ public class Business {
     private int reviewCount;
     private String address;
     private String postalCode;
+    private String categories;
 
-    public Business(String id, String name, double lat, double lng, String city, int stars, int reviewCount, String address, String postalCode) {
+    public Business(String id, String name, double lat, double lng, String city, int stars, int reviewCount, String address, String postalCode, String categories) {
         this.id = id;
         this.name = name;
         this.lat = lat;
@@ -21,6 +22,7 @@ public class Business {
         this.reviewCount = reviewCount;
         this.address = address;
         this.postalCode = postalCode;
+        this.categories = categories;
     }
 
     public String getId() {
@@ -94,6 +96,10 @@ public class Business {
     public void setPostalCode(String postalCode) {
         this.postalCode = postalCode;
     }
+
+    public String getCategories(){ return categories; }
+
+    public void setCategories(String categories){this.categories = categories; }
 
     public String toString() {
         return this.name;

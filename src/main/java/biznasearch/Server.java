@@ -57,6 +57,8 @@ public class Server {
          *
          * GET PARAMETERS
          * --------------
+         *
+         *
          * query - A query for the businesses
          */
         get("/businesses", (req, res) -> { //"show.hmtl");

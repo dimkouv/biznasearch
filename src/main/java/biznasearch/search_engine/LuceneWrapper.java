@@ -60,6 +60,11 @@ public class LuceneWrapper {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter indexWriter = new IndexWriter(businessIndex, indexWriterConfig);
 
+        /* Open/create spell check index*/
+        /* SpellChecker spellchecker = new SpellChecker(spellIndexDirectory); */
+        /* TODO: Add correct dependencies */
+
+
         /* Prepare SQL query */
         String query = "SELECT * FROM businesses";
         PreparedStatement pst = dbConnection.prepareStatement(query);
@@ -80,6 +85,10 @@ public class LuceneWrapper {
 
             if (business.getAddress() != null) {
                 businessEntry.add(new Field("business_address", business.getAddress(), TextField.TYPE_STORED));
+            }
+
+            if (business.getCategories() != null) {
+                businessEntry.add(new Field("business_categories",business.getCategories(), TextField.TYPE_STORED));
             }
 
             indexWriter.addDocument(businessEntry);
@@ -116,4 +125,5 @@ public class LuceneWrapper {
         /* Find businesses by their IDs and return them */
         return Getters.businessesByIDs(dbConnection, businessIDs);
     }
+
 }

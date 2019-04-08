@@ -9,8 +9,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static biznasearch.database.Parsers.parseBusiness;
-import static biznasearch.database.Parsers.sqlBusinessesByIDs;
+import static biznasearch.database.Parsers.*;
 
 public class Getters {
     public static List<Business> businessesByIDs(Connection con, List<String> ids) throws SQLException {
@@ -33,4 +32,5 @@ public class Getters {
 
         return result;
     }
+
 }

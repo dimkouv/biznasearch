@@ -19,7 +19,8 @@ public class Parsers {
                     rs.getInt(6),
                     rs.getInt(7),
                     rs.getString(8),
-                    rs.getString(9)
+                    rs.getString(9),
+                    rs.getString(10)
             );
         }
 
@@ -40,4 +41,5 @@ public class Parsers {
 
         return sql + joiner.toString() + ")";
     }
+
 }
