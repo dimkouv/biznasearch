@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="ie=edge" http-equiv="X-UA-Compatible">
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.4/css/bulma.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <title>Biznasearch</title>
+</head>
+<body>
+<div id="app">
+    <section class="section">
+        <div class="container" id="main">
+            <h1 class="title">
+                <i class="fas fa-search"></i>
+                Biznasearch
+            </h1>
+
+            <p class="subtitle">
+                Search engine for Yelp businesses.
+            </p>
+
+            <hr>
+
+            <div class="form">
+                <div class="field has-addons">
+                    <div :class="{'control is-loading': isLoading}">
+                        <input class="input is-rounded"
+                               placeholder="Query..." type="text" v-model="query">
+                    </div>
+
+                    <div class="stats-for-geeks">
+                        <small>{{stats.queryResults }} results in {{ stats.queryTimeMs }} ms</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results">
+                <div class="box" v-for="r in results">
+                    <article class="media">
+                        <div class="media-content">
+                            <div class="content">
+                                <strong><span class="fas fa-building"></span> {{ r.name }}</strong><br>
+
+                                <small>{{ r.city }}</small>
+
+                                <br>
+                                <small v-for="index in r.stars">
+                                    <span class="fas fa-star"></span>
+                                </small>
+                                <small>Reviews: {{ r.reviewCount }}</small>
+
+                                <br>
+
+                                <div class="is-pulled-right">
+                                    <span class="address">
+                                        <span class="fas fa-map-marked"></span> {{ r.address }}
+                                    </span> <br>
+
+                                    <span class="postal-code">
+                                        <span class="fas fa-mail-bulk"></span> {{ r.postalCode }}
+                                    </span>
+                                </div>
+                                <br>
+                                <hr>
+
+                                <div class="categories is-pulled-right">
+                                    <span class="tag is-info category" v-for="c in r.categories.split(',')">
+                                        {{ c }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <footer class="footer">
+            <div class="content has-text-centered">
+                <p>
+                    <strong>Biznasearch</strong> by Achilleas Alvaro Hysi and Dimitrios N. Kouveris<br>
+                    Developed using Lucene for <span class="is-color-primary">information retrieval</span> course<br>
+                    <small>Computer Science &amp; Engineering Department, UOI</small>
+                </p>
+            </div>
+        </footer>
+    </section>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

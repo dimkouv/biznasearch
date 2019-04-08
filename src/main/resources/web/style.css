@@ -1,0 +1,17 @@
+.results {
+    margin-top: 20px;
+}
+
+.category {
+    margin-right: 5px;
+}
+
+.stats-for-geeks {
+    position: absolute;
+    right: 10px;
+    color: rgb(100, 100, 100);
+}
+
+#main {
+    min-height: 70vh;
+}
