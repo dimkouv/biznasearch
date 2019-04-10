@@ -22,7 +22,7 @@ public class Server {
     private LuceneWrapper luc;
     private int port;
 
-    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port) throws IOException, SQLException {
+    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port) throws SQLException {
         /* Open database connection */
         Connection con = DriverManager.getConnection(
                 dbUrl, dbUsername, dbPassword
@@ -32,7 +32,6 @@ public class Server {
 
         /* Start indexing */
         luc = new LuceneWrapper(indexDir, con);
-        luc.startIndexing();
     }
 
     public static void main(String[] args) {
@@ -57,9 +56,11 @@ public class Server {
         }
     }
 
-    private void registerRoutesAndStart() {
+    private void registerRoutesAndStart() throws IOException {
         System.out.println("Server running on http://127.0.0.1:" + port);
-
+        Properties props = new Properties();
+        InputStream input = new FileInputStream("src/main/resources/application.properties");
+        props.load(input);
         Spark.port(port);
         Spark.staticFiles.location("/web");
         this.enableCors();
@@ -88,6 +89,33 @@ public class Server {
             }
 
             return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10);
+        });
+
+        /*
+         * GET /start-indexing
+         *
+         * GET PARAMETERS
+         * --------------
+         * server-token - A token used for authentication
+         */
+        get("/start-indexing", (req, res) -> {
+            res.type("application/json");
+            String[] requiredParameters = {"server-token"};
+
+            for (String param : requiredParameters) {
+                if (req.queryParams(param) == null) {
+                    res.status(400);
+                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
+                }
+            }
+
+            if (!req.queryParams("server-token").equals(props.getProperty("token"))) {
+                res.status(400);
+                return "{\"message\":\"Authentication error.\"}";
+            }
+
+            luc.startIndexing();
+            return "{\"message\":\"Indexing completed.\"}";
         });
     }
 
