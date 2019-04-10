@@ -2,6 +2,7 @@ package biznasearch;
 
 import biznasearch.controllers.BusinessControllers;
 import biznasearch.search_engine.LuceneWrapper;
+import biznasearch.search_engine.SpellCheckerIndexer;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -20,9 +21,10 @@ import static spark.Spark.get;
 
 public class Server {
     private LuceneWrapper luc;
+    private SpellCheckerIndexer check;
     private int port;
 
-    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port) throws SQLException {
+    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port) throws SQLException, IOException {
         /* Open database connection */
         Connection con = DriverManager.getConnection(
                 dbUrl, dbUsername, dbPassword
@@ -32,6 +34,7 @@ public class Server {
 
         /* Start indexing */
         luc = new LuceneWrapper(indexDir, con);
+        check = new SpellCheckerIndexer(indexDir);
     }
 
     public static void main(String[] args) {
@@ -114,6 +117,7 @@ public class Server {
                 return "{\"message\":\"Authentication error.\"}";
             }
 
+            check.spellIndexBusinessName();
             luc.startIndexing();
             return "{\"message\":\"Indexing completed.\"}";
         });

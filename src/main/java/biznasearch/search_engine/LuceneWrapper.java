@@ -33,10 +33,10 @@ import java.util.List;
 import static biznasearch.database.Parsers.parseBusiness;
 
 public class LuceneWrapper {
-    Directory businessIndexReader;
     private Analyzer analyzer;
     private String indexDir;
     private Connection dbConnection;
+
 
     public LuceneWrapper(String indexDir, Connection connection) {
         this.indexDir = indexDir;
@@ -108,6 +108,11 @@ public class LuceneWrapper {
         Path path = Paths.get(indexDir, "businesses");
         Directory businessIndex = FSDirectory.open(path);
         IndexReader indexReader = DirectoryReader.open(businessIndex);
+        SpellCheckerIndexer check = new SpellCheckerIndexer(indexDir);
+        String [] suggestions = check.getSimmilars(queryText,5);
+        for (String suggestion : suggestions){
+            System.err.println(suggestion);
+        }
 
         /* Init results */
         IndexSearcher searcher = new IndexSearcher(indexReader);
