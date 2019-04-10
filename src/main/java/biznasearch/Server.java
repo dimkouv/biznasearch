@@ -1,6 +1,7 @@
 package biznasearch;
 
 import biznasearch.controllers.BusinessControllers;
+import biznasearch.search_engine.Indexer;
 import biznasearch.search_engine.LuceneWrapper;
 import biznasearch.search_engine.SpellCheckerIndexer;
 import org.apache.log4j.BasicConfigurator;
@@ -23,17 +24,17 @@ public class Server {
     private LuceneWrapper luc;
     private SpellCheckerIndexer check;
     private int port;
+    private String city;
+    private String indexDir;
+    private Connection dbConnection;
 
-    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port) throws SQLException, IOException {
-        /* Open database connection */
-        Connection con = DriverManager.getConnection(
-                dbUrl, dbUsername, dbPassword
-        );
-
+    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port, String city) throws SQLException {
+        this.dbConnection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
+        this.indexDir = indexDir;
         this.port = port;
+        this.city = city;
 
-        /* Start indexing */
-        luc = new LuceneWrapper(indexDir, con);
+        luc = new LuceneWrapper(indexDir, this.dbConnection);
         check = new SpellCheckerIndexer(indexDir);
     }
 
@@ -47,11 +48,14 @@ public class Server {
             InputStream input = new FileInputStream("src/main/resources/application.properties");
             props.load(input);
 
-            Server server = new Server(props.getProperty("url"),
+            Server server = new Server(
+                    props.getProperty("url"),
                     props.getProperty("username"),
                     props.getProperty("password"),
                     props.getProperty("indexDir"),
-                    Integer.parseInt(props.getProperty("port")));
+                    Integer.parseInt(props.getProperty("port")),
+                    props.getProperty("city")
+            );
 
             server.registerRoutesAndStart();
         } catch (Exception e) {
@@ -117,9 +121,19 @@ public class Server {
                 return "{\"message\":\"Authentication error.\"}";
             }
 
-            check.spellIndexBusinessName();
-            luc.startIndexing();
-            return "{\"message\":\"Indexing completed.\"}";
+            Thread indexJob = new Thread(() -> {
+                try {
+                    Indexer indexer = new Indexer(indexDir, dbConnection);
+                    indexer.startIndexing(city);
+                    check.spellIndexBusinessName();
+                } catch (SQLException | IOException v) {
+                    System.out.println(v);
+                }
+            });
+            indexJob.start();
+
+            return "{\"message\":\"Indexing operation started...\"}";
+
         });
     }
 

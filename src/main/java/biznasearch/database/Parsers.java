@@ -6,8 +6,6 @@ import biznasearch.models.Tip;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.StringJoiner;
 
 public class Parsers {
     public static Business parseBusiness(ResultSet rs) throws SQLException {
@@ -59,20 +57,4 @@ public class Parsers {
 
         return null;
     }
-
-    static String sqlBusinessesByIDs(List<String> ids) {
-        if (ids == null || ids.size() == 0) {
-            return "SELECT * FROM businesses";
-        }
-
-        String sql = "SELECT * FROM businesses WHERE id in (";
-
-        StringJoiner joiner = new StringJoiner(",");
-        for (String id : ids) {
-            joiner.add("'" + id + "'");
-        }
-
-        return sql + joiner.toString() + ")";
-    }
-
 }

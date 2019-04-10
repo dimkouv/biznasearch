@@ -15,7 +15,7 @@ public class BusinessControllers {
         long start = System.currentTimeMillis();
         List<Business> businesses = luc.searchBusinesses(query, page, maxResults);
         long elapsedTimeMillis = System.currentTimeMillis() - start;
-        System.out.println(query + ": " + elapsedTimeMillis + "ms for " + businesses.size() + " results");
+        System.out.println(">>> " + query + ": " + elapsedTimeMillis + "ms for " + businesses.size() + " results");
 
         return new Gson().toJson(businesses);
     }

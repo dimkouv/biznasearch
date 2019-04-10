@@ -97,9 +97,13 @@ public class Business {
         this.postalCode = postalCode;
     }
 
-    public String getCategories(){ return categories; }
+    public String getCategories() {
+        return categories;
+    }
 
-    public void setCategories(String categories){this.categories = categories; }
+    public void setCategories(String categories) {
+        this.categories = categories;
+    }
 
     public String toString() {
         return this.name;

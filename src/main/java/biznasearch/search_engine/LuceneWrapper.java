@@ -4,13 +4,8 @@ import biznasearch.database.Getters;
 import biznasearch.models.Business;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -24,13 +19,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static biznasearch.database.Parsers.parseBusiness;
 
 public class LuceneWrapper {
     private Analyzer analyzer;
@@ -42,60 +33,6 @@ public class LuceneWrapper {
         this.indexDir = indexDir;
         this.analyzer = new StandardAnalyzer();
         this.dbConnection = connection;
-    }
-
-    public void startIndexing() throws SQLException, IOException {
-        indexBusinesses();
-    }
-
-    private void indexBusinesses() throws IOException, SQLException {
-        /* Add Businesses from database to Lucene index. */
-
-        Business business;
-        Document businessEntry;
-
-        /* Open/create index file */
-        Path path = Paths.get(indexDir, "businesses");
-        Directory businessIndex = FSDirectory.open(path);
-        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        IndexWriter indexWriter = new IndexWriter(businessIndex, indexWriterConfig);
-
-        /* Open/create spell check index*/
-        /* SpellChecker spellchecker = new SpellChecker(spellIndexDirectory); */
-        /* TODO: Add correct dependencies */
-
-
-        /* Prepare SQL query */
-        String query = "SELECT * FROM businesses";
-        PreparedStatement pst = dbConnection.prepareStatement(query);
-        ResultSet rs = pst.executeQuery();
-
-        /* Index businesses fields */
-        business = parseBusiness(rs);
-        while (business != null) {
-            businessEntry = new Document();
-
-            if (business.getId() != null) {
-                businessEntry.add(new Field("business_id", business.getId(), TextField.TYPE_STORED));
-            }
-
-            if (business.getName() != null) {
-                businessEntry.add(new Field("business_name", business.getName(), TextField.TYPE_STORED));
-            }
-
-            if (business.getAddress() != null) {
-                businessEntry.add(new Field("business_address", business.getAddress(), TextField.TYPE_STORED));
-            }
-
-            if (business.getCategories() != null) {
-                businessEntry.add(new Field("business_categories",business.getCategories(), TextField.TYPE_STORED));
-            }
-
-            indexWriter.addDocument(businessEntry);
-            business = parseBusiness(rs);
-        }
-
-        indexWriter.close();
     }
 
     public List<Business> searchBusinesses(String queryText, int page, int maxResults) throws IOException, ParseException, SQLException {
