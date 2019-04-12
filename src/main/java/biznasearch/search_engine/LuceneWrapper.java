@@ -37,19 +37,20 @@ public class LuceneWrapper {
 
     public List<Business> searchBusinesses(String queryText, int page, int maxResults) throws IOException, ParseException, SQLException {
         /* Search businesses using lucene */
-
         /* Build query */
         Query query = new QueryParser("business_name", analyzer).parse(queryText);
+
+        /* Did you mean function implementation*/
+        SpellCheckerIndexer spell = new SpellCheckerIndexer(indexDir);
+        System.out.println("Did you mean:");
+        StringBuilder suggestions = new StringBuilder();
+        for (String s : spell.getSimmilars(queryText, 5)) suggestions.append(" ## ").append(s);
+        System.out.println(suggestions);
 
         /* Open business index TODO: Keep it open as a private field */
         Path path = Paths.get(indexDir, "businesses");
         Directory businessIndex = FSDirectory.open(path);
         IndexReader indexReader = DirectoryReader.open(businessIndex);
-        SpellCheckerIndexer check = new SpellCheckerIndexer(indexDir);
-        String [] suggestions = check.getSimmilars(queryText,5);
-        for (String suggestion : suggestions){
-            System.err.println(suggestion);
-        }
 
         /* Init results */
         IndexSearcher searcher = new IndexSearcher(indexReader);

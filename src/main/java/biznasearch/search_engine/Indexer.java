@@ -42,17 +42,20 @@ public class Indexer {
     public void startIndexing(String city) throws SQLException, IOException {
         System.out.println(">>> Starting indexing, target city: " + city);
         indexBusinesses(city);
-        indexReviews(city);
         indexTips(city);
+        indexReviews(city);
     }
 
     private void indexBusinesses(String city) throws IOException, SQLException {
         Business business;
         Document businessEntry;
+
         Path path = Paths.get(indexDir, businessesIndexSuffix);
         Directory businessIndex = FSDirectory.open(path);
+
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+
         IndexWriter indexWriter = new IndexWriter(businessIndex, indexWriterConfig);
 
         String sqlQuery = sqlBusinessesOfCity(city);
@@ -67,7 +70,6 @@ public class Indexer {
         while (business != null) {
             cnt++;
             businessEntry = new Document();
-
             if (business.getId() != null) {
                 businessEntry.add(new Field("business_id", business.getId(), TextField.TYPE_STORED));
             }
@@ -77,6 +79,7 @@ public class Indexer {
             }
 
             indexWriter.addDocument(businessEntry);
+
             business = parseBusiness(rs);
         }
 
@@ -116,6 +119,7 @@ public class Indexer {
             }
 
             indexWriter.addDocument(reviewEntry);
+
             review = parseReview(rs);
         }
 
