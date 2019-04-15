@@ -1,0 +1,58 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[LGR,T1]{fontenc}
+\usepackage[greek,english]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{isodate}
+\usepackage[parfill]{parskip}
+\usepackage{graphicx}
+\usepackage{pdfpages}
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{color}
+\usepackage{fancyhdr}
+
+\title{%
+  \huge \textgreek{Ανάκτηση Πληροφορίας} \\
+\large biznasearch - \textgreek{Μηχανή αναζήτησης επιχειρήσεων}}
+\author{
+    \textgreek{Αχιλλέας Χ.Σ.} (0101) \\
+    \textgreek{Δημήτριος Ν.Κ.} (1010)
+}
+\date{\textgreek{Απρίλιος} 2019}
+
+\begin{document}
+
+% cover page
+\pagenumbering{gobble}
+
+\maketitle
+\newpage
+
+\renewcommand{\contentsname}{\textgreek{Περιεχόμενα}}
+\tableofcontents
+
+\pagenumbering{arabic}
+
+% introduction
+\newpage
+\section{\textgreek{Εισαγωγή}}
+\input{introduction.tex}
+
+\newpage
+\section{\textgreek{Προεπεξεργασία}}
+\input{preprocessing.tex}
+
+\newpage
+\section{\textgreek{Περιγραφή συστήματος}}
+\input{ui.tex}
+
+\newpage
+\section{\textgreek{Μετα-δεδομένα}}
+\input{metadata.tex}
+
+\newpage
+
+\end{document}
