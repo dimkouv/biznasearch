@@ -3,7 +3,6 @@
 \usepackage[utf8]{inputenc}
 \usepackage[LGR,T1]{fontenc}
 \usepackage[greek,english]{babel}
-\usepackage[utf8]{inputenc}
 \usepackage[english]{isodate}
 \usepackage[parfill]{parskip}
 \usepackage{graphicx}
@@ -13,17 +12,23 @@
 \usepackage{listings}
 \usepackage{color}
 \usepackage{fancyhdr}
-
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true,
+    linktoc=all,
+    linkcolor=black,
+}
 \title{%
   \huge \textgreek{Ανάκτηση Πληροφορίας} \\
 \large biznasearch - \textgreek{Μηχανή αναζήτησης επιχειρήσεων}}
 \author{
-    \textgreek{Αχιλλέας Χ.Σ.} (0101) \\
-    \textgreek{Δημήτριος Ν.Κ.} (1010)
+    \textgreek{Δημήτριος Ν. Κουβέρης} (2730) \\
+    \textgreek{Αλβάρο Α. Χύσι} (2574)
 }
 \date{\textgreek{Απρίλιος} 2019}
 
 \begin{document}
+
 
 % cover page
 \pagenumbering{gobble}
@@ -41,18 +46,18 @@
 \section{\textgreek{Εισαγωγή}}
 \input{introduction.tex}
 
-\newpage
+
 \section{\textgreek{Προεπεξεργασία}}
 \input{preprocessing.tex}
 
-\newpage
+
 \section{\textgreek{Περιγραφή συστήματος}}
 \input{ui.tex}
 
-\newpage
+
 \section{\textgreek{Μετα-δεδομένα}}
 \input{metadata.tex}
 
-\newpage
+
 
 \end{document}
