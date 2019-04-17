@@ -1,67 +1,76 @@
 let app = new Vue({
     el: '#app',
     data: {
-        isLoading: false,
         query: '',
         results: [],
+        suggestions: [],
         stats: {
             queryTimeMs: 0,
-            queryResults: 0,
-            lastQueryTime: 0
+            queryResults: 0
         },
-        searchJob: null
+        loading: {
+            results: false,
+            suggestions: false
+        }
     },
 
     methods: {
+        fetchSuggestions() {
+            let self = this;
+
+            if (self.loading.suggestions || self.query.length < 1) {
+                return;
+            }
+            const t = new Date().getTime();
+            self.loading.suggestions = true;
+            self.results = [];
+
+            $.ajax({
+                url: 'http://localhost:8888/suggest',
+                data: { query: self.query }
+            })
+                .then(res => {
+                    self.suggestions = res;
+                })
+                .catch(err => {
+                    console.log(err);
+                })
+                .then(() => {
+                    self.loading.suggestions = false;
+                })
+        },
+
         fetchNewResults() {
             let self = this;
+
+            if (self.loading.results || self.query.length < 1) {
+                return;
+            }            
             const t = new Date().getTime();
-            // allow one query per 500ms
-            console.log(t - this.stats.lastQueryTime);
-
-            if (t - this.stats.lastQueryTime < 500) {
-                console.log('isin');
-
-                if (this.searchJob !== null) {
-                    clearTimeout(this.searchJob);
-                }
-                console.log('New job: ', this.query);
-                this.searchJob = setTimeout(() => {
-                    self.fetchNewResults()
-                }, 500 - (t - this.stats.lastQueryTime));
-                return
-            }
-
-            this.stats.lastQueryTime = t;
-            this.isLoading = true;
-            this.results = [];
+            self.loading.results = true;
+            self.results = [];
 
             $.ajax({
                 url: 'http://localhost:8888/businesses',
-                data: {
-                    query: this.query
-                }
+                data: { query: self.query }
             })
                 .then(res => {
-                    this.stats.queryTimeMs = new Date().getTime() - t;
-                    this.stats.queryResults = res.length;
-
-                    this.results = res;
+                    self.stats.queryTimeMs = new Date().getTime() - t;
+                    self.stats.queryResults = res.length;
+                    self.results = res;
                 })
                 .catch(err => {
-                    console.log(err)
+                    console.log(err);
                 })
                 .then(() => {
-                    this.isLoading = false
+                    self.loading.results = false;
                 })
         }
     },
 
     watch: {
         query() {
-            if (!this.isLoading) {
-                this.fetchNewResults();
-            }
+            this.fetchSuggestions()
         }
     }
 });

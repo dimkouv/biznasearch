@@ -28,15 +28,28 @@
 
             <div class="form">
                 <div class="field has-addons">
-                    <div :class="{'control is-loading': isLoading}">
-                        <input class="input is-rounded"
-                               placeholder="Query..." type="text" v-model="query">
+                    <div :class="{'control': true, 'is-loading': loading.results}">
+                        <input class="input is-rounded" @keyup.enter="fetchNewResults"
+                            placeholder="Query..." type="text" v-model="query">
+                        </input>
                     </div>
 
-                    <div class="stats-for-geeks">
-                        <small>{{stats.queryResults }} results in {{ stats.queryTimeMs }} ms</small>
+                    <div class="control">
+                        <button @click="fetchNewResults" class="button is-primary" :disabled="loading.results">Search</button>
+                    </div>
+
+                    <div class="stats-for-geeks" v-show="stats.queryResults > 0">
+                        <small>{{stats.queryResults }} result{{ (stats.queryResults > 1) ? 's' : ''}} in {{ stats.queryTimeMs }} ms</small>
                     </div>
                 </div>
+            </div>
+
+            <div class="suggestions" v-show="suggestions.length > 0">
+                Search instead for: 
+                <a href="#" @click="query=suggestion; fetchNewResults()"
+                    v-for="suggestion in suggestions" class="button is-small suggestion">
+                    {{ suggestion }}
+                </a>
             </div>
 
             <div class="results">

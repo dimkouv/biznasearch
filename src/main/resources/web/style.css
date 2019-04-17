@@ -2,6 +2,13 @@
     margin-top: 20px;
 }
 
+.suggestions {
+    margin-top: 5px;
+}
+.suggestion {
+    margin-left: 2px;
+}
+
 .category {
     margin-right: 5px;
 }
