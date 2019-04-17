@@ -28,7 +28,7 @@ public class Server {
     private Connection dbConnection;
 
     private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port, String city)
-            throws SQLException {
+            throws SQLException, IOException {
         this.dbConnection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
         this.indexDir = indexDir;
         this.port = port;
@@ -69,9 +69,7 @@ public class Server {
         /*
          * GET /businesses
          *
-         * GET PARAMETERS
-         * --------------
-         * query - A query for the businesses
+         * GET PARAMETERS -------------- query - A query for the businesses
          */
         get("/businesses", (req, res) -> {
             res.type("application/json");
@@ -93,11 +91,33 @@ public class Server {
         });
 
         /*
+         * GET /suggest
+         *
+         * GET PARAMETERS -------------- query - A query to find similars
+         */
+        get("/suggest", (req, res) -> {
+            res.type("application/json");
+            String[] requiredParameters = { "query" };
+
+            for (String param : requiredParameters) {
+                if (req.queryParams(param) == null) {
+                    res.status(400);
+                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
+                }
+            }
+
+            if (req.queryParams("query").length() == 0) {
+                res.status(400);
+                return "{\"message\":\"'query' is empty.\"}";
+            }
+
+            return BusinessControllers.businessNameSimilars(req.queryParams("query"), luc, 10);
+        });
+
+        /*
          * GET /start-indexing
          *
-         * GET PARAMETERS
-         * --------------
-         * authtoken - A token used for authentication
+         * GET PARAMETERS -------------- authtoken - A token used for authentication
          */
         get("/index", (req, res) -> {
             res.type("application/json");

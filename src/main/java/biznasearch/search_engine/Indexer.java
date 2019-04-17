@@ -19,8 +19,11 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.search.spell.LuceneDictionary;
+import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -40,8 +43,6 @@ public class Indexer {
      * required fields.
      * 
      * @param city The target city to index businesses from.
-     * @throws SQLException
-     * @throws IOException
      */
     public void startIndexing(String city) throws SQLException, IOException {
         System.out.println(">>> Starting indexing, target city: " + city);
@@ -49,6 +50,8 @@ public class Indexer {
         createIndex("businesses", Arrays.asList("id", "name"), sqlBusinessesIdxColsOfCity(city));
         createIndex("reviews", Arrays.asList("business_id", "text"), sqlReviewsIdxColsWhereCityIs(city));
         createIndex("tips", Arrays.asList("business_id", "text"), sqlTipsIdxColsWhereCityIs(city));
+
+        createBusinessNameSpellIndex();
     }
 
     /**
@@ -88,6 +91,30 @@ public class Indexer {
 
         indexWriter.close();
         double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
-        System.out.printf("\tindexed " + cnt + " entries in " + elapsedTimeSec + "sec", elapsedTimeSec);
+        System.out.printf("\tindexed %d entries in %.2fsec\n", cnt, elapsedTimeSec);
+    }
+
+    /**
+     * Generates spell checking dictionary for business names.
+     */
+    public void createBusinessNameSpellIndex() throws IOException {
+        System.out.println(">>> Starting business.name spell check indexing");
+        long startTime = System.currentTimeMillis();
+
+        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+        indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+
+        Directory spellCheckDir = FSDirectory.open(Paths.get(indexDir, "spell_check_business_name"));
+        Directory businessesIndexDir = FSDirectory.open(Paths.get(indexDir, "businesses"));
+
+        DirectoryReader businessIndexReader = DirectoryReader.open(businessesIndexDir);
+        LuceneDictionary dictionary = new LuceneDictionary(businessIndexReader, "name");
+
+        SpellChecker spell = new SpellChecker(spellCheckDir);
+        spell.indexDictionary(dictionary, indexWriterConfig, false);
+        spell.close();
+
+        double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
+        System.out.printf("\tcompleted in " + elapsedTimeSec + "sec");
     }
 }

@@ -1,7 +1,13 @@
 package biznasearch.search_engine;
 
-import biznasearch.database.Getters;
-import biznasearch.models.Business;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
@@ -12,60 +18,62 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import biznasearch.database.Getters;
+import biznasearch.models.Business;
 
 public class LuceneWrapper {
     private Analyzer analyzer;
-    private String indexDir;
     private Connection dbConnection;
 
+    private Directory businessIndex;
+    private IndexReader businessIndexReader;
 
-    public LuceneWrapper(String indexDir, Connection connection) {
-        this.indexDir = indexDir;
+    private SpellChecker businessNameSpellChecker;
+
+    public LuceneWrapper(String indexDir, Connection connection) throws IOException {
         this.analyzer = new StandardAnalyzer();
         this.dbConnection = connection;
+
+        Path path = Paths.get(indexDir, "businesses");
+        businessIndex = FSDirectory.open(path);
+
+        businessNameSpellChecker = new SpellChecker(FSDirectory.open(Paths.get(indexDir, "spell_check_business_name")));
     }
 
-    public List<Business> searchBusinesses(String queryText, int page, int maxResults) throws IOException, ParseException, SQLException {
-        /* Search businesses using lucene */
-        /* Build query */
-        Query query = new QueryParser("business_name", analyzer).parse(queryText);
+    public List<String> getBusinessNameSuggestions(String queryText, int maxResults) throws IOException {
+        List<String> suggestions = new ArrayList<String>();
+        for (String s : businessNameSpellChecker.suggestSimilar(queryText, maxResults)) {
+            suggestions.add(s);
+        }
 
-        /* Did you mean function implementation*/
-        SpellCheckerIndexer spell = new SpellCheckerIndexer(indexDir);
-        System.out.println("Did you mean:");
-        StringBuilder suggestions = new StringBuilder();
-        for (String s : spell.getSimmilars(queryText, 5)) suggestions.append(" ## ").append(s);
-        System.out.println(suggestions);
+        return suggestions;
+    }
 
-        /* Open business index TODO: Keep it open as a private field */
-        Path path = Paths.get(indexDir, "businesses");
-        Directory businessIndex = FSDirectory.open(path);
-        IndexReader indexReader = DirectoryReader.open(businessIndex);
+    public List<Business> searchBusinesses(String queryText, int page, int maxResults)
+            throws IOException, ParseException, SQLException {
 
-        /* Init results */
-        IndexSearcher searcher = new IndexSearcher(indexReader);
+        Query query = new QueryParser("name", analyzer).parse(queryText);
+
+        businessIndexReader = DirectoryReader.open(businessIndex);
+
+        IndexSearcher searcher = new IndexSearcher(businessIndexReader);
         TopDocs topDocs = searcher.search(query, maxResults);
 
         /* Fetch the resulting business IDs */
         List<String> businessIDs = new ArrayList<>();
         for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-            businessIDs.add(searcher.doc(scoreDoc.doc).get("business_id"));
+            businessIDs.add(searcher.doc(scoreDoc.doc).get("id"));
         }
 
         if (businessIDs.size() == 0) {
             return new ArrayList<>();
         }
-        /* Find businesses by their IDs and return them */
+
+        /* Find businesses by their IDs from db and return them */
         return Getters.businessesByIDs(dbConnection, businessIDs);
     }
 
