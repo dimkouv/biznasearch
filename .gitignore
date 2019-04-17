@@ -334,3 +334,6 @@ TSWLatexianTemp*
 
 .vscode/*
 .idea/*
+.settings/
+
+*.pdf
