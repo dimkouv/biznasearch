@@ -331,3 +331,6 @@ TSWLatexianTemp*
 # standalone packages
 *.sta
 *_temp.tex
+
+.vscode/*
+.idea/*
