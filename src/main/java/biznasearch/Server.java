@@ -1,14 +1,7 @@
 package biznasearch;
 
-import biznasearch.controllers.BusinessControllers;
-import biznasearch.search_engine.Indexer;
-import biznasearch.search_engine.LuceneWrapper;
-import biznasearch.search_engine.SpellCheckerIndexer;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.lucene.search.spell.SpellChecker;
-import spark.Spark;
+import static spark.Spark.before;
+import static spark.Spark.get;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,8 +11,14 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import static spark.Spark.before;
-import static spark.Spark.get;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
+import biznasearch.controllers.BusinessControllers;
+import biznasearch.search_engine.Indexer;
+import biznasearch.search_engine.LuceneWrapper;
+import spark.Spark;
 
 public class Server {
     private LuceneWrapper luc;
@@ -28,7 +27,8 @@ public class Server {
     private String indexDir;
     private Connection dbConnection;
 
-    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port, String city) throws SQLException {
+    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port, String city)
+            throws SQLException {
         this.dbConnection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
         this.indexDir = indexDir;
         this.port = port;
@@ -47,14 +47,9 @@ public class Server {
             InputStream input = new FileInputStream("src/main/resources/application.properties");
             props.load(input);
 
-            Server server = new Server(
-                    props.getProperty("url"),
-                    props.getProperty("username"),
-                    props.getProperty("password"),
-                    props.getProperty("indexDir"),
-                    Integer.parseInt(props.getProperty("port")),
-                    props.getProperty("city")
-            );
+            Server server = new Server(props.getProperty("url"), props.getProperty("username"),
+                    props.getProperty("password"), props.getProperty("indexDir"),
+                    Integer.parseInt(props.getProperty("port")), props.getProperty("city"));
 
             server.registerRoutesAndStart();
         } catch (Exception e) {
@@ -80,7 +75,7 @@ public class Server {
          */
         get("/businesses", (req, res) -> {
             res.type("application/json");
-            String[] requiredParameters = {"query"};
+            String[] requiredParameters = { "query" };
 
             for (String param : requiredParameters) {
                 if (req.queryParams(param) == null) {
@@ -102,11 +97,11 @@ public class Server {
          *
          * GET PARAMETERS
          * --------------
-         * server-token - A token used for authentication
+         * authtoken - A token used for authentication
          */
-        get("/start-indexing", (req, res) -> {
+        get("/index", (req, res) -> {
             res.type("application/json");
-            String[] requiredParameters = {"server-token"};
+            String[] requiredParameters = { "authtoken" };
 
             for (String param : requiredParameters) {
                 if (req.queryParams(param) == null) {
@@ -115,7 +110,7 @@ public class Server {
                 }
             }
 
-            if (!req.queryParams("server-token").equals(props.getProperty("token"))) {
+            if (!req.queryParams("authtoken").equals(props.getProperty("authtoken"))) {
                 res.status(400);
                 return "{\"message\":\"Authentication error.\"}";
             }
@@ -132,11 +127,11 @@ public class Server {
             indexJob.start();
 
             return "{\"message\":\"Indexing operation started...\"}";
-
         });
     }
 
-    // Enables CORS on requests. This method is an initialization method and should be called once.
+    // Enables CORS on requests. This method is an initialization method and should
+    // be called once.
     private void enableCors() {
         Spark.staticFiles.header("Access-Control-Allow-Origin", "*");
 
