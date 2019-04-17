@@ -19,21 +19,21 @@ public class Shortcuts {
         return sql + joiner.toString() + ")";
     }
 
-    public static String sqlReviewsWhereCityIs(String city) {
-        String sql = "SELECT r.* FROM reviews r INNER JOIN businesses b on r.business_id = b.id";
-        sql += String.format(" WHERE b.city = '%s' LIMIT 1000000", city);
-
-        return sql;
-    }
-
-    public static String sqlTipsWhereCityIs(String city) {
-        String sql = "SELECT t.* FROM tips t INNER JOIN businesses b on t.business_id = b.id";
+    public static String sqlReviewsIdxColsWhereCityIs(String city) {
+        String sql = "SELECT r.business_id, r.text FROM reviews r INNER JOIN businesses b on r.business_id = b.id";
         sql += String.format(" WHERE b.city = '%s'", city);
 
         return sql;
     }
 
-    public static String sqlBusinessesOfCity(String city) {
-        return String.format("SELECT * FROM businesses WHERE city = '%s'", city);
+    public static String sqlTipsIdxColsWhereCityIs(String city) {
+        String sql = "SELECT t.business_id, t.text FROM tips t INNER JOIN businesses b on t.business_id = b.id";
+        sql += String.format(" WHERE b.city = '%s'", city);
+
+        return sql;
+    }
+
+    public static String sqlBusinessesIdxColsOfCity(String city) {
+        return String.format("SELECT id, name FROM businesses WHERE city = '%s'", city);
     }
 }
