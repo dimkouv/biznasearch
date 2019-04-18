@@ -21,7 +21,7 @@ public class Shortcuts {
 
     public static String sqlReviewsIdxColsWhereCityIs(String city) {
         String sql = "SELECT r.business_id, r.text FROM reviews r INNER JOIN businesses b on r.business_id = b.id";
-        sql += String.format(" WHERE b.city = '%s'", city);
+        sql += String.format(" WHERE b.city = '%s' LIMIT 1000000", city);
 
         return sql;
     }
