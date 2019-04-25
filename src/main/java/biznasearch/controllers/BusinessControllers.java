@@ -16,7 +16,7 @@ public class BusinessControllers {
     public static String businessSearch(String query, int page, LuceneWrapper luc, int maxResults)
             throws IOException, ParseException, SQLException {
         long start = System.currentTimeMillis();
-        List<Business> businesses = luc.searchBusinesses(query, page, maxResults);
+        List<Business> businesses = luc.search(query, page, maxResults);
         long elapsedTimeMillis = System.currentTimeMillis() - start;
         System.out.println(">>> " + query + ": " + elapsedTimeMillis + "ms for " + businesses.size() + " results");
 
