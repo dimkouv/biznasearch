@@ -22,6 +22,7 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
@@ -47,9 +48,9 @@ public class Indexer {
     public void startIndexing(String city) throws SQLException, IOException {
         System.out.println(">>> Starting indexing, target city: " + city);
 
-        createIndex("businesses", Arrays.asList("id", "name"), sqlBusinessesIdxColsOfCity(city));
-        createIndex("reviews", Arrays.asList("business_id", "text"), sqlReviewsIdxColsWhereCityIs(city));
-        createIndex("tips", Arrays.asList("business_id", "text"), sqlTipsIdxColsWhereCityIs(city));
+        createIndex("businesses", Arrays.asList("id", "name", "categories"), sqlBusinessesIdxColsOfCity(city));
+//        createIndex("reviews", Arrays.asList("business_id", "text"), sqlReviewsIdxColsWhereCityIs(city));
+//        createIndex("tips", Arrays.asList("business_id", "text"), sqlTipsIdxColsWhereCityIs(city));
 
         createBusinessNameSpellIndex();
     }
@@ -79,12 +80,12 @@ public class Indexer {
         int cnt = 0;
 
         System.out.println(">>> Starting " + targetTable + " indexing");
+        System.out.println(">>> Businesses have :"+columns.size());
         while (rs.next()) {
             docEntry = new Document();
             for (int i = 0; i < columns.size(); i++) {
                 docEntry.add(new Field(columns.get(i), rs.getString(i + 1), TextField.TYPE_STORED));
             }
-
             indexWriter.addDocument(docEntry);
             cnt++;
         }
@@ -113,7 +114,7 @@ public class Indexer {
         SpellChecker spell = new SpellChecker(spellCheckDir);
         spell.indexDictionary(dictionary, indexWriterConfig, false);
         spell.close();
-
+        businessesIndexDir.close();
         double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
         System.out.printf("\tcompleted in " + elapsedTimeSec + "sec");
     }

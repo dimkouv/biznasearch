@@ -121,7 +121,7 @@ public class Server {
          */
         get("/index", (req, res) -> {
             res.type("application/json");
-            String[] requiredParameters = { "authtoken" };
+            String[] requiredParameters = { "token" };
 
             for (String param : requiredParameters) {
                 if (req.queryParams(param) == null) {
@@ -130,7 +130,7 @@ public class Server {
                 }
             }
 
-            if (!req.queryParams("authtoken").equals(props.getProperty("authtoken"))) {
+            if (!req.queryParams("token").equals(props.getProperty("token"))) {
                 res.status(400);
                 return "{\"message\":\"Authentication error.\"}";
             }

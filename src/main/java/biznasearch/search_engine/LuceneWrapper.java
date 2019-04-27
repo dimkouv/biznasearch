@@ -1,20 +1,10 @@
 package biznasearch.search_engine;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import biznasearch.database.Getters;
+import biznasearch.models.Business;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
@@ -25,39 +15,71 @@ import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import biznasearch.models.Business;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class LuceneWrapper {
     private Analyzer analyzer;
     private Connection dbConnection;
 
     private Directory businessIndex;
-    private Directory index;
+    private Directory tipsIndex;
+    private Directory reviewsIndex;
+
     private IndexReader businessIndexReader;
+    private IndexReader tipsIndexReader;
+    private IndexReader reviewsIndexReader;
 
     private SpellChecker businessNameSpellChecker;
+    private static int bus = 1;
+    private static int tips = 2;
+    private static int reviews = 3;
+    private static int cat = 4;
 
     public LuceneWrapper(String indexDir, Connection connection) throws IOException {
         this.analyzer = new StandardAnalyzer();
         this.dbConnection = connection;
 
         Path path = Paths.get(indexDir, "businesses");
+        Path tipsPath = Paths.get(indexDir, "tips");
+        Path reviewsPath = Paths.get(indexDir, "reviews");
+
+
         businessIndex = FSDirectory.open(path);
-        Path indexPath = Paths.get(indexDir);
-        index = FSDirectory.open(indexPath);
+        tipsIndex = FSDirectory.open(tipsPath);
+        reviewsIndex = FSDirectory.open(reviewsPath);
+
         businessNameSpellChecker = new SpellChecker(FSDirectory.open(Paths.get(indexDir, "spell_check_business_name")));
+
     }
 
     public List<String> getBusinessNameSuggestions(String queryText, int maxResults) throws IOException {
-        List<String> suggestions = new ArrayList<String>();
-        for (String s : businessNameSpellChecker.suggestSimilar(queryText, maxResults)) {
-            suggestions.add(s);
-        }
+        List<String> suggestions = new ArrayList<>();
+        suggestions.addAll(Arrays.asList(businessNameSpellChecker.suggestSimilar(queryText, maxResults)));
 
         return suggestions;
     }
 
+    /**
+     * This is the main search method.
+     * It splits the query text implementing the ability to search by field.
+     * like field:queryText.
+     * @param queryText The text the user gave to the interface.
+     * @param page Page size
+     * @param maxResults Number of max results the top docs will return.
+     * @return List of businesses' ids.
+     * @throws ParseException
+     * @throws SQLException
+     * @throws IOException
+     */
     public List<Business> search (String queryText, int page, int maxResults) throws ParseException, SQLException, IOException {
+        queryText = queryText.replaceAll("\\s+","");
         String [] query = queryText.split(":");
         List <String> searchRes;
         switch (query[0]) {
@@ -65,6 +87,7 @@ public class LuceneWrapper {
                 searchRes = searchBusinesses(query[1], page, maxResults);
                 break;
             case "category":
+                System.out.println("line 089!>>> "+query[1]);
                 searchRes = searchBusinessesByCategory(query[1], page, maxResults);
                 break;
             case "tip":
@@ -77,76 +100,143 @@ public class LuceneWrapper {
                 searchRes = searchInAll(query[0], page, maxResults);
                 break;
         }
-        return fetchSearch((ArrayList<String>) searchRes);
+        System.out.println("line 103!>>> "+ searchRes);
+        return new ArrayList<>();
+//        return fetchSearch((ArrayList<String>) searchRes);
     }
 
+    /**
+     * Connects Searcher to Database Parser.
+     * @param list
+     * @return List<Businesses>
+     * @throws SQLException
+     */
     public List<Business> fetchSearch(ArrayList<String> list) throws SQLException {
         return Getters.businessesByIDs(dbConnection, list);
     }
 
-    public List<String> searchInAll(String queryText, int page, int maxResults) throws IOException, ParseException, SQLException {
+    /**
+     * Uses field to find the correct column to search in the database from the top Docs.
+     * @param query
+     * @param maxResults
+     * @param searcher
+     * @param field
+     * @return List<String>
+     * @throws IOException
+     */
+    public List<String> findSearch(Query query, int maxResults, IndexSearcher searcher, int field) throws IOException {
         List <String> res = new ArrayList<>();
-        List <String> names = searchBusinesses(queryText, page, maxResults);
-        res.addAll(names);
-        res.addAll(searchBusinessesByCategory(queryText, page, maxResults/4));
-        res.addAll(searchByTips(queryText, page, maxResults/4));
-        res.addAll(searchByReviews(queryText, page, maxResults/4));
-
-        return res;
-    }
-
-    private List<String> searchByReviews(String queryText, int page, int i) {
-        return new ArrayList<>();
-    }
-
-    private List<String> searchByTips(String queryText, int page, int maxResults) {
-        List <String> res = new ArrayList<>();
-
-        return res;
-    }
-
-    private List<String> searchBusinessesByCategory(String queryText, int page, int maxResults) throws ParseException, IOException {
-        List <String> res = new ArrayList<>();
-        Query query = new QueryParser("categories", analyzer).parse(queryText);
-        businessIndexReader = DirectoryReader.open(businessIndex);
-        IndexSearcher searcher = new IndexSearcher(businessIndexReader);
         TopDocs topDocs = searcher.search(query, maxResults);
-        for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-            res.add(searcher.doc(scoreDoc.doc).get("id"));
+        if (field == bus) {
+            for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                res.add(searcher.doc(scoreDoc.doc).get("id"));
+            }
+        }else if (field == cat) {
+            for (ScoreDoc scoreDoc : topDocs.scoreDocs){
+                res.add(searcher.doc(scoreDoc.doc).get("id"));
+                System.out.println("line 137!!>>>"+searcher.getQueryCache()+ " " + res.size());
+            }
+        }else{
+            for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                res.add(searcher.doc(scoreDoc.doc).get("business_id"));
+            }
         }
-
         if (res.size() == 0) {
             return new ArrayList<>();
         }
+        return res;
+    }
+
+    /**
+     * Implements the search in all possible fields when the field is not specified
+     * @param queryText
+     * @param page
+     * @param maxResults
+     * @return List of all business ids that the query text exists in any of the fields.
+     * @throws IOException
+     * @throws ParseException
+     * @throws SQLException
+     */
+    public List<String> searchInAll(String queryText, int page, int maxResults) throws IOException, ParseException, SQLException {
+        List <String> res = new ArrayList<>();
+        res.addAll(searchBusinesses(queryText, page, maxResults/4));
+        res.addAll(searchBusinessesByCategory(queryText, page, maxResults/4));
+//        res.addAll(searchByTips(queryText, page, maxResults/4));
+//        res.addAll(searchByReviews(queryText, page, maxResults/4));
 
         return res;
+    }
+
+    /**
+     * Searches the reviews' text for the query.
+     * @param queryText
+     * @param page
+     * @param maxResults
+     * @return
+     * @throws IOException
+     * @throws ParseException
+     */
+    private List<String> searchByReviews(String queryText, int page, int maxResults) throws IOException, ParseException {
+        Query query = new QueryParser("text", analyzer).parse(queryText);
+        reviewsIndexReader = DirectoryReader.open(reviewsIndex);
+        IndexSearcher searcher = new IndexSearcher(reviewsIndexReader);
+        return findSearch(query, maxResults, searcher, reviews);
+    }
+
+    /**
+     * Searches tips' text for the query.
+     * @param queryText
+     * @param page
+     * @param maxResults
+     * @return
+     * @throws ParseException
+     * @throws IOException
+     */
+    private List<String> searchByTips(String queryText, int page, int maxResults) throws ParseException, IOException {
+        Query query = new QueryParser("text", analyzer).parse(queryText);
+        tipsIndexReader = DirectoryReader.open(tipsIndex);
+        IndexSearcher searcher = new IndexSearcher(tipsIndexReader);
+        return findSearch(query, maxResults, searcher, tips);
 
     }
 
+    /**
+     * Searches business categories for the query.
+     * @param queryText
+     * @param page
+     * @param maxResults
+     * @return
+     * @throws ParseException
+     * @throws IOException
+     */
+    private List<String> searchBusinessesByCategory(String queryText, int page, int maxResults) throws ParseException, IOException {
+        Query query = new QueryParser("categories", analyzer).parse(queryText);
+        System.out.println("line 214!>>> "+queryText);
+        businessIndexReader = DirectoryReader.open(businessIndex);
+        IndexSearcher searcher = new IndexSearcher(businessIndexReader);
+        System.out.println("line 217!>>> "+query);
+        return findSearch(query, maxResults, searcher, cat);
+//        return new ArrayList<>();
+    }
 
+    /**
+     * Searches business names for the query.
+     * @param queryText
+     * @param page
+     * @param maxResults
+     * @return
+     * @throws IOException
+     * @throws ParseException
+     */
     public List<String> searchBusinesses(String queryText, int page, int maxResults)
-            throws IOException, ParseException, SQLException {
+            throws IOException, ParseException {
 
         Query query = new QueryParser("name", analyzer).parse(queryText);
-
         businessIndexReader = DirectoryReader.open(businessIndex);
-
         IndexSearcher searcher = new IndexSearcher(businessIndexReader);
-        TopDocs topDocs = searcher.search(query, maxResults);
-
-        /* Fetch the resulting business IDs */
-        List<String> businessIDs = new ArrayList<>();
-        for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-            businessIDs.add(searcher.doc(scoreDoc.doc).get("id"));
-        }
-
-        if (businessIDs.size() == 0) {
-            return new ArrayList<>();
-        }
-
-        return businessIDs;
-        /* Find businesses by their IDs from db and return them */
-//        return Getters.businessesByIDs(dbConnection, businessIDs);
+//        TopDocs topDocs = searcher.search(query, maxResults);
+        System.out.println("line 238!>>>"+ query);
+        return findSearch(query, maxResults, searcher, bus);
     }
 
 }
