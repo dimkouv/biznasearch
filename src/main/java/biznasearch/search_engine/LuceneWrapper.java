@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class LuceneWrapper {
@@ -79,30 +80,32 @@ public class LuceneWrapper {
      * @throws IOException
      */
     public List<Business> search (String queryText, int page, int maxResults) throws ParseException, SQLException, IOException {
-        queryText = queryText.replaceAll("\\s+","");
-        String [] query = queryText.split(":");
+        String queryTextClean = queryText.replaceAll("\\s+","");
+        String [] query = queryTextClean.split(":");
         List <String> searchRes;
-        switch (query[0]) {
-            case "name":
-                searchRes = searchBusinesses(query[1], page, maxResults);
-                break;
-            case "category":
-                System.out.println("line 089!>>> "+query[1]);
-                searchRes = searchBusinessesByCategory(query[1], page, maxResults);
-                break;
-            case "tip":
-                searchRes =searchByTips(query[1], page, maxResults);
-                break;
-            case "review":
-                searchRes = searchByReviews(query[1], page, maxResults);
-                break;
-            default:
-                searchRes = searchInAll(query[0], page, maxResults);
-                break;
+        if (query.length == 2){
+            switch (query[0]) {
+                case "name":
+                    searchRes = searchBusinesses(query[1], page, maxResults);
+                    break;
+                case "category":
+                    searchRes = searchBusinessesByCategory(query[1], page, maxResults);
+                    break;
+                case "tip":
+                    searchRes = searchByTips(query[1], page, maxResults);
+                    break;
+                case "review":
+                    searchRes = searchByReviews(query[1], page, maxResults);
+                    break;
+                default:
+                    String ques = query[0] + " " + query[1];
+                    searchRes = searchInAll(ques, page, maxResults);
+                    break;
+            }
+        }else{
+            searchRes = searchInAll(query[0], page, maxResults);
         }
-        System.out.println("line 103!>>> "+ searchRes);
-        return new ArrayList<>();
-//        return fetchSearch((ArrayList<String>) searchRes);
+        return fetchSearch((ArrayList<String>) searchRes);
     }
 
     /**
@@ -134,7 +137,6 @@ public class LuceneWrapper {
         }else if (field == cat) {
             for (ScoreDoc scoreDoc : topDocs.scoreDocs){
                 res.add(searcher.doc(scoreDoc.doc).get("id"));
-                System.out.println("line 137!!>>>"+searcher.getQueryCache()+ " " + res.size());
             }
         }else{
             for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
@@ -155,14 +157,13 @@ public class LuceneWrapper {
      * @return List of all business ids that the query text exists in any of the fields.
      * @throws IOException
      * @throws ParseException
-     * @throws SQLException
      */
-    public List<String> searchInAll(String queryText, int page, int maxResults) throws IOException, ParseException, SQLException {
+    public List<String> searchInAll(String queryText, int page, int maxResults) throws IOException, ParseException {
         List <String> res = new ArrayList<>();
-        res.addAll(searchBusinesses(queryText, page, maxResults/4));
-        res.addAll(searchBusinessesByCategory(queryText, page, maxResults/4));
-//        res.addAll(searchByTips(queryText, page, maxResults/4));
-//        res.addAll(searchByReviews(queryText, page, maxResults/4));
+        res.addAll(searchBusinesses(queryText, page, maxResults));
+        res.addAll(searchBusinessesByCategory(queryText, page, maxResults));
+        res.addAll(searchByTips(queryText, page, maxResults));
+        res.addAll(searchByReviews(queryText, page, maxResults));
 
         return res;
     }
@@ -211,12 +212,9 @@ public class LuceneWrapper {
      */
     private List<String> searchBusinessesByCategory(String queryText, int page, int maxResults) throws ParseException, IOException {
         Query query = new QueryParser("categories", analyzer).parse(queryText);
-        System.out.println("line 214!>>> "+queryText);
         businessIndexReader = DirectoryReader.open(businessIndex);
         IndexSearcher searcher = new IndexSearcher(businessIndexReader);
-        System.out.println("line 217!>>> "+query);
         return findSearch(query, maxResults, searcher, cat);
-//        return new ArrayList<>();
     }
 
     /**
@@ -230,12 +228,9 @@ public class LuceneWrapper {
      */
     public List<String> searchBusinesses(String queryText, int page, int maxResults)
             throws IOException, ParseException {
-
         Query query = new QueryParser("name", analyzer).parse(queryText);
         businessIndexReader = DirectoryReader.open(businessIndex);
         IndexSearcher searcher = new IndexSearcher(businessIndexReader);
-//        TopDocs topDocs = searcher.search(query, maxResults);
-        System.out.println("line 238!>>>"+ query);
         return findSearch(query, maxResults, searcher, bus);
     }
 

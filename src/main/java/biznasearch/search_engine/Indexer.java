@@ -49,9 +49,8 @@ public class Indexer {
         System.out.println(">>> Starting indexing, target city: " + city);
 
         createIndex("businesses", Arrays.asList("id", "name", "categories"), sqlBusinessesIdxColsOfCity(city));
-//        createIndex("reviews", Arrays.asList("business_id", "text"), sqlReviewsIdxColsWhereCityIs(city));
-//        createIndex("tips", Arrays.asList("business_id", "text"), sqlTipsIdxColsWhereCityIs(city));
-
+        createIndex("reviews", Arrays.asList("business_id", "text"), sqlReviewsIdxColsWhereCityIs(city));
+        createIndex("tips", Arrays.asList("business_id", "text"), sqlTipsIdxColsWhereCityIs(city));
         createBusinessNameSpellIndex();
     }
 
