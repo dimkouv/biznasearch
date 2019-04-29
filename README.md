@@ -4,4 +4,4 @@ Search engine for Yelp businesses using Apache Lucene
 
 
 ## Known Bugs
-- Server needs a restart after the initial spell check indexing.
+- On some queries the engine returns no results and crashes the system
