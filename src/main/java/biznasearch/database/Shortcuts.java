@@ -46,4 +46,12 @@ public class Shortcuts {
     public static String sqlBusinessesIdxColsOfCity(String city) {
         return String.format("SELECT id, name, categories FROM businesses WHERE city = '%s'", city);
     }
+
+    public static String sqlTipsIdxColsWhereBusinessIdIs(String businessID) {
+        return String.format("SELECT id, text FROM tips WHERE business_id = '%s'", businessID);
+    }
+
+    public static String sqlReviewsIdxColsWhereBusinessIdIs(String businessID) {
+        return String.format("SELECT id, text FROM reviews WHERE business_id = '%s'", businessID);
+    }
 }

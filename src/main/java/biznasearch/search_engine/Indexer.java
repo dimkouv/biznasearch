@@ -1,8 +1,6 @@
 package biznasearch.search_engine;
 
 import static biznasearch.database.Shortcuts.sqlBusinessesIdxColsOfCity;
-import static biznasearch.database.Shortcuts.sqlReviewsIdxColsWhereCityIs;
-import static biznasearch.database.Shortcuts.sqlTipsIdxColsWhereCityIs;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -22,11 +20,12 @@ import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.spell.LuceneDictionary;
 import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+
+import biznasearch.database.Shortcuts;
 
 public class Indexer {
     private String indexDir;
@@ -48,9 +47,7 @@ public class Indexer {
     public void startIndexing(String city) throws SQLException, IOException {
         System.out.println(">>> Starting indexing, target city: " + city);
 
-        createIndex("businesses", Arrays.asList("id", "name", "categories"), sqlBusinessesIdxColsOfCity(city));
-        createIndex("reviews", Arrays.asList("business_id", "text"), sqlReviewsIdxColsWhereCityIs(city));
-        createIndex("tips", Arrays.asList("business_id", "text"), sqlTipsIdxColsWhereCityIs(city));
+        createBusinessIndex(city);
         createBusinessNameSpellIndex();
     }
 
@@ -62,14 +59,16 @@ public class Indexer {
      *                    searchable after indexing.
      * @param sqlQuery    The sql query to fetch the target rows.
      */
-    private void createIndex(String targetTable, List<String> columns, String sqlQuery)
-            throws SQLException, IOException {
+    private void createBusinessIndex(String city) throws SQLException, IOException {
         Document docEntry;
-        Path path = Paths.get(indexDir, targetTable);
+        Path path = Paths.get(indexDir, "businesses");
         Directory businessIndex = FSDirectory.open(path);
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
         IndexWriter indexWriter = new IndexWriter(businessIndex, indexWriterConfig);
+
+        String sqlQuery = sqlBusinessesIdxColsOfCity(city);
+        List<String> columns = Arrays.asList("id", "name", "categories");
 
         PreparedStatement pst = dbConnection.prepareStatement(sqlQuery);
         pst.setFetchSize(100);
@@ -78,20 +77,43 @@ public class Indexer {
         long startTime = System.currentTimeMillis();
         int cnt = 0;
 
-        System.out.println(">>> Starting " + targetTable + " indexing");
-        System.out.println(">>> Businesses have :"+columns.size());
+        System.out.println(">>> Starting indexing");
         while (rs.next()) {
             docEntry = new Document();
             for (int i = 0; i < columns.size(); i++) {
                 docEntry.add(new Field(columns.get(i), rs.getString(i + 1), TextField.TYPE_STORED));
             }
+
+            String sqlReviews = Shortcuts.sqlReviewsIdxColsWhereBusinessIdIs(rs.getString(1));
+            PreparedStatement pstRevs = dbConnection.prepareStatement(sqlReviews);
+            pstRevs.setFetchSize(100);
+            ResultSet rsRevs = pstRevs.executeQuery();
+            while (rsRevs.next()) {
+                docEntry.add(new Field("review_id", rsRevs.getString(1), TextField.TYPE_STORED));
+                docEntry.add(new Field("review_text", rsRevs.getString(2), TextField.TYPE_STORED));
+            }
+
+            String sqlTips = Shortcuts.sqlTipsIdxColsWhereBusinessIdIs(rs.getString(1));
+            PreparedStatement pstTips = dbConnection.prepareStatement(sqlTips);
+            pstTips.setFetchSize(100);
+            ResultSet rsTips = pstTips.executeQuery();
+            while (rsTips.next()) {
+                docEntry.add(new Field("tip_id", rsTips.getString(1), TextField.TYPE_STORED));
+                docEntry.add(new Field("tip_text", rsTips.getString(2), TextField.TYPE_STORED));
+            }
+
             indexWriter.addDocument(docEntry);
             cnt++;
+
+            if (cnt % 100 == 0) {
+                double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
+                System.out.printf("\tindexed %d businesses in %.2fsec\n", cnt, elapsedTimeSec);
+            }
         }
 
         indexWriter.close();
         double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
-        System.out.printf("\tindexed %d entries in %.2fsec\n", cnt, elapsedTimeSec);
+        System.out.printf("\tindexed %d businesses in %.2fsec\n", cnt, elapsedTimeSec);
     }
 
     /**
