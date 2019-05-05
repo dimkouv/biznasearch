@@ -74,12 +74,13 @@ public class LuceneWrapper {
      * @param queryText The text the user gave to the interface.
      * @param page Page size
      * @param maxResults Number of max results the top docs will return.
+     * @param orderBy A businesses db field to order the results (prepend a minus symbol to sort descending)
      * @return List of businesses' ids.
      * @throws ParseException
      * @throws SQLException
      * @throws IOException
      */
-    public List<Business> search (String queryText, int page, int maxResults) throws ParseException, SQLException, IOException {
+    public List<Business> search (String queryText, int page, int maxResults, String orderBy) throws ParseException, SQLException, IOException {
         String queryTextClean = queryText.replaceAll("\\s+","");
         String [] query = queryTextClean.split(":");
         List <String> searchRes;
@@ -105,17 +106,8 @@ public class LuceneWrapper {
         }else{
             searchRes = searchInAll(query[0], page, maxResults);
         }
-        return fetchSearch((ArrayList<String>) searchRes);
-    }
 
-    /**
-     * Connects Searcher to Database Parser.
-     * @param list
-     * @return List<Businesses>
-     * @throws SQLException
-     */
-    public List<Business> fetchSearch(ArrayList<String> list) throws SQLException {
-        return Getters.businessesByIDs(dbConnection, list);
+        return Getters.businessesByIDs(dbConnection, (ArrayList<String>) searchRes, orderBy);
     }
 
     /**

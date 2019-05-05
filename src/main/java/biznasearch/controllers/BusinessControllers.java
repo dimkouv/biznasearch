@@ -13,10 +13,10 @@ import biznasearch.search_engine.LuceneWrapper;
 
 public class BusinessControllers {
 
-    public static String businessSearch(String query, int page, LuceneWrapper luc, int maxResults)
+    public static String businessSearch(String query, int page, LuceneWrapper luc, int maxResults, String orderBy)
             throws IOException, ParseException, SQLException {
         long start = System.currentTimeMillis();
-        List<Business> businesses = luc.search(query, page, maxResults);
+        List<Business> businesses = luc.search(query, page, maxResults, orderBy);
         long elapsedTimeMillis = System.currentTimeMillis() - start;
         System.out.println(">>> " + query + ": " + elapsedTimeMillis + "ms for " + businesses.size() + " results");
 

@@ -87,7 +87,7 @@ public class Server {
                 return "{\"message\":\"'query' is empty.\"}";
             }
 
-            return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10);
+            return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10, req.queryParams("orderBy"));
         });
 
         /*

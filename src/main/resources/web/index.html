@@ -26,7 +26,7 @@
 
             <hr>
 
-            <div class="form">
+            <div class="form">        
                 <div class="field has-addons">
                     <div :class="{'control': true, 'is-loading': loading.results}">
                         <input class="input is-rounded" @keyup.enter="fetchNewResults"
@@ -40,6 +40,19 @@
 
                     <div class="stats-for-geeks" v-show="stats.queryResults > 0">
                         <small>{{stats.queryResults }} result{{ (stats.queryResults > 1) ? 's' : ''}} in {{ stats.queryTimeMs }} ms</small>
+                    </div>
+                </div>
+
+                <div style="float: right; margin-top: -40px;">
+                    <div><small>Order by</small></div>
+                    <div class="select">
+                        <select v-model="orderBy">
+                            <option value="">Default</option>
+                            <option value="-stars">Stars descending</option>
+                            <option value="stars">Stars ascending</option>
+                            <option value="-review_count">Number of reviews descending</option>
+                            <option value="review_count">Number of reviews</option>
+                        </select>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@ let app = new Vue({
     el: '#app',
     data: {
         query: '',
+        orderBy: '',
         results: [],
         suggestions: [],
         stats: {
@@ -52,7 +53,10 @@ let app = new Vue({
 
             $.ajax({
                 url: 'http://localhost:8888/businesses',
-                data: { query: self.query }
+                data: {
+                    query: self.query,
+                    orderBy: self.orderBy
+                }
             })
                 .then(res => {
                     self.stats.queryTimeMs = new Date().getTime() - t;

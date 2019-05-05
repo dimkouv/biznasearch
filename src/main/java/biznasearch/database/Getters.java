@@ -13,11 +13,10 @@ import static biznasearch.database.Parsers.parseBusiness;
 import static biznasearch.database.Shortcuts.sqlBusinessesByIDs;
 
 public class Getters {
-    public static List<Business> businessesByIDs(Connection con, List<String> ids) throws SQLException {
+    public static List<Business> businessesByIDs(Connection con, List<String> ids, String orderBy) throws SQLException {
         /* Returns a list of businesses by their IDs */
 
-        String sql = sqlBusinessesByIDs(ids);
-
+        String sql = sqlBusinessesByIDs(ids, orderBy);
         PreparedStatement pst = con.prepareStatement(sql);
         ResultSet rs = pst.executeQuery();
 
