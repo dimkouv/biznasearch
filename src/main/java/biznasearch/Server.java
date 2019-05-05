@@ -89,10 +89,11 @@ public class Server {
                 res.status(400);
                 return "{\"message\":\"'query' is empty.\"}";
             }
-            List<String> acceptedOrderCols = Arrays.asList("review_count", "-review_count","stars", "-stars","");
-            if (acceptedOrderCols.indexOf(req.queryParams("orderBy"))==-1){
+
+            List<String> acceptedOrderCols = Arrays.asList("review_count", "-review_count", "stars", "-stars", "");
+            if (!acceptedOrderCols.contains(req.queryParams("orderBy"))) {
                 res.status(404);
-                return "{\"message\":\"'orderBy' is not valid.\"}";
+                return "{\"message\":\"'orderBy="+req.queryParams("orderBy")+"' is not valid.\"}";
             }
             return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10, req.queryParams("orderBy"));
         });
