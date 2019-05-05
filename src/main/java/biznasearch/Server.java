@@ -9,6 +9,9 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.log4j.BasicConfigurator;
@@ -86,7 +89,11 @@ public class Server {
                 res.status(400);
                 return "{\"message\":\"'query' is empty.\"}";
             }
-
+            List<String> acceptedOrderCols = Arrays.asList("review_count", "-review_count","stars", "-stars","");
+            if (acceptedOrderCols.indexOf(req.queryParams("orderBy"))==-1){
+                res.status(404);
+                return "{\"message\":\"'orderBy' is not valid.\"}";
+            }
             return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10, req.queryParams("orderBy"));
         });
 
