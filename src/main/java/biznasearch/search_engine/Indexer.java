@@ -90,7 +90,7 @@ public class Indexer {
             ResultSet rsRevs = pstRevs.executeQuery();
             while (rsRevs.next()) {
                 docEntry.add(new Field("review_id", rsRevs.getString(1), TextField.TYPE_STORED));
-                docEntry.add(new Field("review_text", rsRevs.getString(2), TextField.TYPE_STORED));
+                docEntry.add(new Field("review", rsRevs.getString(2), TextField.TYPE_STORED));
             }
 
             String sqlTips = Shortcuts.sqlTipsIdxColsWhereBusinessIdIs(rs.getString(1));
@@ -99,7 +99,7 @@ public class Indexer {
             ResultSet rsTips = pstTips.executeQuery();
             while (rsTips.next()) {
                 docEntry.add(new Field("tip_id", rsTips.getString(1), TextField.TYPE_STORED));
-                docEntry.add(new Field("tip_text", rsTips.getString(2), TextField.TYPE_STORED));
+                docEntry.add(new Field("tip", rsTips.getString(2), TextField.TYPE_STORED));
             }
 
             indexWriter.addDocument(docEntry);
