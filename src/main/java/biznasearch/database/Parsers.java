@@ -1,6 +1,7 @@
 package biznasearch.database;
 
 import biznasearch.models.Business;
+import biznasearch.models.Query;
 import biznasearch.models.Review;
 import biznasearch.models.Tip;
 
@@ -53,6 +54,18 @@ public class Parsers {
                     rs.getString(3),
                     rs.getInt(4),
                     rs.getString(5)
+            );
+        }
+
+        return null;
+    }
+
+    public static Query parseQuery(ResultSet rs) throws SQLException {
+        if (rs.next()) {
+            return new Query(
+                rs.getLong(1),
+                rs.getString(2),
+                rs.getInt(3)
             );
         }
 

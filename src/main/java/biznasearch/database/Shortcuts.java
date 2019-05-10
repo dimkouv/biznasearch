@@ -63,4 +63,20 @@ public class Shortcuts {
         stmt.executeUpdate("UPDATE businesses SET clicks=clicks+1 WHERE id='" + businessID + "'");
         stmt.close();
     }
+
+    public static String sqlSimilarQueries(String query) {
+        return "SELECT text FROM queries WHERE text like '%" + query + "%' ORDER BY count DESC";
+    }
+
+    public static void sqlLogQuery(Connection dbCon, String query) throws SQLException {
+        Statement stmt = dbCon.createStatement();
+        int updatedRecords = stmt.executeUpdate(
+            "UPDATE queries SET count=count+1 WHERE text='" + query + "'");
+
+        if (updatedRecords == 0) {
+            stmt.executeUpdate("INSERT INTO queries(text, count) VALUES ('" + query + "', 1)");
+        }
+
+        stmt.close();
+    }
 }

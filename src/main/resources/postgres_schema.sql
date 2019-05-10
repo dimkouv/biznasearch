@@ -55,6 +55,40 @@ CREATE TABLE public.businesses (
 ALTER TABLE public.businesses OWNER TO sysdba;
 
 --
+-- Name: queries; Type: TABLE; Schema: public; Owner: sysdba
+--
+
+CREATE TABLE public.queries (
+    id bigint NOT NULL,
+    text character varying(128) NOT NULL,
+    count integer DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.queries OWNER TO sysdba;
+
+--
+-- Name: queries_id_seq; Type: SEQUENCE; Schema: public; Owner: sysdba
+--
+
+CREATE SEQUENCE public.queries_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.queries_id_seq OWNER TO sysdba;
+
+--
+-- Name: queries_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: sysdba
+--
+
+ALTER SEQUENCE public.queries_id_seq OWNED BY public.queries.id;
+
+
+--
 -- Name: reviews; Type: TABLE; Schema: public; Owner: sysdba
 --
 
@@ -109,6 +143,13 @@ ALTER SEQUENCE public.tips_id_seq OWNED BY public.tips.id;
 
 
 --
+-- Name: queries id; Type: DEFAULT; Schema: public; Owner: sysdba
+--
+
+ALTER TABLE ONLY public.queries ALTER COLUMN id SET DEFAULT nextval('public.queries_id_seq'::regclass);
+
+
+--
 -- Name: tips id; Type: DEFAULT; Schema: public; Owner: sysdba
 --
 
@@ -121,6 +162,14 @@ ALTER TABLE ONLY public.tips ALTER COLUMN id SET DEFAULT nextval('public.tips_id
 
 ALTER TABLE ONLY public.businesses
     ADD CONSTRAINT businesses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: queries queries_pk; Type: CONSTRAINT; Schema: public; Owner: sysdba
+--
+
+ALTER TABLE ONLY public.queries
+    ADD CONSTRAINT queries_pk PRIMARY KEY (id);
 
 
 --
@@ -193,6 +242,20 @@ CREATE INDEX businesses_review_count_idx ON public.businesses USING btree (revie
 --
 
 CREATE INDEX businesses_stars_idx ON public.businesses USING btree (stars);
+
+
+--
+-- Name: queries_count_idx; Type: INDEX; Schema: public; Owner: sysdba
+--
+
+CREATE INDEX queries_count_idx ON public.queries USING btree (count);
+
+
+--
+-- Name: queries_text_idx; Type: INDEX; Schema: public; Owner: sysdba
+--
+
+CREATE INDEX queries_text_idx ON public.queries USING btree (text);
 
 
 --

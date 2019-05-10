@@ -97,6 +97,17 @@ public class Server {
                 res.status(404);
                 return "{\"message\":\"'orderBy="+req.queryParams("orderBy")+"' is not valid.\"}";
             }
+
+            Thread queryLogJob = new Thread(() -> {
+                try {
+                    Shortcuts.sqlLogQuery(dbConnection, req.queryParams("query"));
+                } catch (SQLException v) {
+                    System.out.println(v);
+                    v.printStackTrace();
+                }
+            });
+            queryLogJob.start();
+
             return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10, req.queryParams("orderBy"));
         });
 
