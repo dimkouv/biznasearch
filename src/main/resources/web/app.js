@@ -12,7 +12,8 @@ let app = new Vue({
         loading: {
             results: false,
             suggestions: false
-        }
+        },
+        selectedBusiness: null
     },
 
     methods: {
@@ -75,6 +76,23 @@ let app = new Vue({
     watch: {
         query() {
             this.fetchSuggestions()
+        },
+
+        selectedBusiness() {
+            if (this.selectedBusiness !== null) {
+                $.ajax({
+                    method: 'post',
+                    url: 'http://localhost:8888/click',
+                    data: {
+                        'business-id': this.selectedBusiness.id
+                    }
+                })
+                this.selectedBusiness.clicks ++
+            }
+        },
+
+        orderBy() {
+            this.fetchNewResults()
         }
     }
 });

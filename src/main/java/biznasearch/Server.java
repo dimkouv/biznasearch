@@ -2,6 +2,7 @@ package biznasearch;
 
 import static spark.Spark.before;
 import static spark.Spark.get;
+import static spark.Spark.post;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import biznasearch.controllers.BusinessControllers;
+import biznasearch.database.Shortcuts;
 import biznasearch.search_engine.Indexer;
 import biznasearch.search_engine.LuceneWrapper;
 import spark.Spark;
@@ -89,7 +91,8 @@ public class Server {
                 return "{\"message\":\"'query' is empty.\"}";
             }
 
-            List<String> acceptedOrderCols = Arrays.asList("review_count", "-review_count", "stars", "-stars", "");
+            List<String> acceptedOrderCols = Arrays.asList(
+                "review_count", "-review_count", "stars", "-stars", "clicks", "-clicks", "");
             if (!acceptedOrderCols.contains(req.queryParams("orderBy"))) {
                 res.status(404);
                 return "{\"message\":\"'orderBy="+req.queryParams("orderBy")+"' is not valid.\"}";
@@ -154,6 +157,40 @@ public class Server {
             indexJob.start();
 
             return "{\"message\":\"Indexing operation started...\"}";
+        });
+
+        /*
+         * POST /click
+         * 
+         * Called when a user clicks on a business that appears in the results.
+         *
+         * POST PARAMETERS -------------- business-id - ID of the business to increment its clicks
+         */
+        post("/click", (req, res) -> {
+            res.type("application/json");
+            String[] requiredParameters = { "business-id" };
+
+            for (String param : requiredParameters) {
+                if (req.queryParams(param) == null) {
+                    res.status(400);
+                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
+                }
+            }
+
+            Thread statsJob = new Thread(() -> {
+                try {
+                    String businessID = req.queryParams("business-id");
+                    if (businessID != null && businessID.length() == 22) {
+                        Shortcuts.sqlAddBusinessClick(dbConnection, businessID);
+                    }
+                } catch (SQLException v) {
+                    System.out.println(v);
+                    v.printStackTrace();
+                }
+            });
+            statsJob.start();
+
+            return "{\"message\":\"OK\"}";
         });
     }
 

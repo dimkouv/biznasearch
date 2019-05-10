@@ -11,8 +11,9 @@ public class Business {
     private String address;
     private String postalCode;
     private String categories;
+    private int clicks;
 
-    public Business(String id, String name, double lat, double lng, String city, int stars, int reviewCount, String address, String postalCode, String categories) {
+    public Business(String id, String name, double lat, double lng, String city, int stars, int reviewCount, String address, String postalCode, String categories, int clicks) {
         this.id = id;
         this.name = name;
         this.lat = lat;
@@ -23,6 +24,7 @@ public class Business {
         this.address = address;
         this.postalCode = postalCode;
         this.categories = categories;
+        this.clicks = clicks;
     }
 
     public String getId() {
@@ -103,6 +105,14 @@ public class Business {
 
     public void setCategories(String categories) {
         this.categories = categories;
+    }
+
+    public void setClicks(int clicks) {
+        this.clicks = clicks;
+    }
+
+    public int getClicks() {
+        return clicks;
     }
 
     public String toString() {

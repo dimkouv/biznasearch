@@ -1,5 +1,8 @@
 package biznasearch.database;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -53,5 +56,11 @@ public class Shortcuts {
 
     public static String sqlReviewsIdxColsWhereBusinessIdIs(String businessID) {
         return String.format("SELECT id, text FROM reviews WHERE business_id = '%s'", businessID);
+    }
+
+    public static void sqlAddBusinessClick(Connection dbCon, String businessID) throws SQLException {
+        Statement stmt = dbCon.createStatement();
+        stmt.executeUpdate("UPDATE businesses SET clicks=clicks+1 WHERE id='" + businessID + "'");
+        stmt.close();
     }
 }

@@ -52,6 +52,8 @@
                             <option value="stars">Stars ascending</option>
                             <option value="-review_count">Number of reviews descending</option>
                             <option value="review_count">Number of reviews</option>
+                            <option value="clicks">Number of clicks ascending</option>
+                            <option value="-clicks">Number of clicks descending</option>
                         </select>
                     </div>
                 </div>
@@ -66,7 +68,7 @@
             </div>
 
             <div class="results">
-                <div class="box" v-for="r in results">
+                <div class="box clickable" v-for="r in results" @click="selectedBusiness=r">
                     <article class="media">
                         <div class="media-content">
                             <div class="content">
@@ -104,6 +106,32 @@
                     </article>
                 </div>
             </div>
+
+
+            <div class="modal is-active" v-if="selectedBusiness !== null">
+                <div class="modal-background"></div>
+                <div class="modal-content">
+                    <div class="box">
+                        <div class="title">{{ selectedBusiness.name }}</div>
+                        <div class="subtitle"><span class="fas fa-map-marked"></span> {{ selectedBusiness.city }}</div>
+                        <hr>
+
+                        <div><strong>Stars:</strong>{{ selectedBusiness.stars }}</div>
+                        <div><strong>Total reviews:</strong>{{ selectedBusiness.reviewsCount }}</div>
+                        <div><strong>Address:</strong>{{ selectedBusiness.address }}</div>
+                        <div><strong>Postal Code:</strong>{{ selectedBusiness.postalCode }}</div>
+                        <div><strong>Categories:</strong>{{ selectedBusiness.categories }}</div>
+                        <div><strong>Stars:</strong>{{ selectedBusiness.stars }}</div>
+                        <div><strong>Clicks:</strong>{{ selectedBusiness.clicks }}</div>
+
+                        <hr>
+                        <div class="button is-rounded is-primary is-pulled-right"
+                            @click="selectedBusiness=null">Close</div>
+                    </div>
+                </div>
+                <button class="modal-close is-large" aria-label="close" @click="selectedBusiness=null"></button>
+            </div>
+
         </div>
 
         <hr>

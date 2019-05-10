@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 10.6 (Ubuntu 10.6-0ubuntu0.18.04.1)
--- Dumped by pg_dump version 11.2
+-- Dumped from database version 10.7 (Ubuntu 10.7-0ubuntu0.18.04.1)
+-- Dumped by pg_dump version 10.7 (Ubuntu 10.7-0ubuntu0.18.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -15,6 +15,20 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -23,75 +37,69 @@ SET default_with_oids = false;
 -- Name: businesses; Type: TABLE; Schema: public; Owner: sysdba
 --
 
-CREATE TABLE public.businesses
-(
-  id           character varying(32) NOT NULL,
-  name         character varying(128),
-  lat          double precision,
-  lng          double precision,
-  city         character varying(128),
-  stars        double precision,
-  review_count integer,
-  address      character varying(128),
-  postal_code  character varying(64),
-  categories   character varying(1024)
+CREATE TABLE public.businesses (
+    id character varying(32) NOT NULL,
+    name character varying(128),
+    lat double precision,
+    lng double precision,
+    city character varying(128),
+    stars double precision,
+    review_count integer,
+    address character varying(128),
+    postal_code character varying(64),
+    categories character varying(1024),
+    clicks integer DEFAULT 0
 );
 
 
-ALTER TABLE public.businesses
-  OWNER TO sysdba;
+ALTER TABLE public.businesses OWNER TO sysdba;
 
 --
 -- Name: reviews; Type: TABLE; Schema: public; Owner: sysdba
 --
 
-CREATE TABLE public.reviews
-(
-  id          character varying(32) NOT NULL,
-  business_id character varying(32),
-  stars       integer,
-  date        date,
-  text        text,
-  useful      integer,
-  funny       integer,
-  cool        integer
+CREATE TABLE public.reviews (
+    id character varying(32) NOT NULL,
+    business_id character varying(32),
+    stars integer,
+    date date,
+    text text,
+    useful integer,
+    funny integer,
+    cool integer
 );
 
 
-ALTER TABLE public.reviews
-  OWNER TO sysdba;
+ALTER TABLE public.reviews OWNER TO sysdba;
 
 --
 -- Name: tips; Type: TABLE; Schema: public; Owner: sysdba
 --
 
-CREATE TABLE public.tips
-(
-  id               bigint NOT NULL,
-  text             text,
-  date             date,
-  compliment_count integer,
-  business_id      character varying(32)
+CREATE TABLE public.tips (
+    id bigint NOT NULL,
+    text text,
+    date date,
+    compliment_count integer,
+    business_id character varying(32)
 );
 
 
-ALTER TABLE public.tips
-  OWNER TO sysdba;
+ALTER TABLE public.tips OWNER TO sysdba;
 
 --
 -- Name: tips_id_seq; Type: SEQUENCE; Schema: public; Owner: sysdba
 --
 
 CREATE SEQUENCE public.tips_id_seq
-  START WITH 1
-  INCREMENT BY 1
-  NO MINVALUE
-  NO MAXVALUE
-  CACHE 1;
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 
-ALTER TABLE public.tips_id_seq
-  OWNER TO sysdba;
+ALTER TABLE public.tips_id_seq OWNER TO sysdba;
 
 --
 -- Name: tips_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: sysdba
@@ -104,8 +112,7 @@ ALTER SEQUENCE public.tips_id_seq OWNED BY public.tips.id;
 -- Name: tips id; Type: DEFAULT; Schema: public; Owner: sysdba
 --
 
-ALTER TABLE ONLY public.tips
-  ALTER COLUMN id SET DEFAULT nextval('public.tips_id_seq'::regclass);
+ALTER TABLE ONLY public.tips ALTER COLUMN id SET DEFAULT nextval('public.tips_id_seq'::regclass);
 
 
 --
@@ -113,7 +120,7 @@ ALTER TABLE ONLY public.tips
 --
 
 ALTER TABLE ONLY public.businesses
-  ADD CONSTRAINT businesses_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT businesses_pkey PRIMARY KEY (id);
 
 
 --
@@ -121,7 +128,7 @@ ALTER TABLE ONLY public.businesses
 --
 
 ALTER TABLE ONLY public.reviews
-  ADD CONSTRAINT reviews_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT reviews_pkey PRIMARY KEY (id);
 
 
 --
@@ -129,7 +136,7 @@ ALTER TABLE ONLY public.reviews
 --
 
 ALTER TABLE ONLY public.tips
-  ADD CONSTRAINT tips_pkey PRIMARY KEY (id);
+    ADD CONSTRAINT tips_pkey PRIMARY KEY (id);
 
 
 --
@@ -151,6 +158,13 @@ CREATE INDEX businesses_categories_idx ON public.businesses USING btree (categor
 --
 
 CREATE INDEX businesses_city_idx ON public.businesses USING btree (city);
+
+
+--
+-- Name: businesses_clicks_idx; Type: INDEX; Schema: public; Owner: sysdba
+--
+
+CREATE INDEX businesses_clicks_idx ON public.businesses USING btree (clicks);
 
 
 --
@@ -221,7 +235,7 @@ CREATE INDEX tips_text_idx ON public.tips USING btree (text);
 --
 
 ALTER TABLE ONLY public.reviews
-  ADD CONSTRAINT reviews_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses (id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT reviews_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -229,7 +243,7 @@ ALTER TABLE ONLY public.reviews
 --
 
 ALTER TABLE ONLY public.tips
-  ADD CONSTRAINT tips_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses (id) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT tips_business_id_fkey FOREIGN KEY (business_id) REFERENCES public.businesses(id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

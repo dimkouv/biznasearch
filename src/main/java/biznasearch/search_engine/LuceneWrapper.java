@@ -34,10 +34,6 @@ public class LuceneWrapper {
     private IndexReader businessIndexReader;
 
     private SpellChecker businessNameSpellChecker;
-    private static int bus = 1;
-    private static int tips = 2;
-    private static int reviews = 3;
-    private static int cat = 4;
 
     public LuceneWrapper(String indexDir, Connection connection) throws IOException {
         this.analyzer = new StandardAnalyzer();
