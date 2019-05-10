@@ -5,6 +5,7 @@ let app = new Vue({
         orderBy: '',
         results: [],
         suggestions: [],
+        querySuggestions: [],
         stats: {
             queryTimeMs: 0,
             queryResults: 0
@@ -42,8 +43,28 @@ let app = new Vue({
                 })
         },
 
+        fetchQuerySuggestions() {
+            let self = this;
+
+            $.ajax({
+                url: 'http://localhost:8888/query-suggest',
+                data: { query: self.query }
+            })
+                .then(res => {
+                    self.querySuggestions = res;
+                })
+        },
+
+        fetchFromQuerySuggestion(text) {
+            this.query=text
+            this.fetchNewResults()
+            setTimeout(() => { this.querySuggestions=[] }, 200)
+        },
+
         fetchNewResults() {
             let self = this;
+
+            setTimeout(() => { this.querySuggestions=[] }, 200)
 
             if (self.loading.results || self.query.length < 1) {
                 return;
@@ -76,6 +97,7 @@ let app = new Vue({
     watch: {
         query() {
             this.fetchSuggestions()
+            this.fetchQuerySuggestions()
         },
 
         selectedBusiness() {

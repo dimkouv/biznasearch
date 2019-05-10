@@ -59,6 +59,13 @@
                 </div>
             </div>
 
+            <div class="query-suggestions" v-show="querySuggestions.length > 0">
+                <div v-for="querySuggestion in querySuggestions" class="query-suggestion"
+                    @click="fetchFromQuerySuggestion(querySuggestion.text)">
+                    {{ querySuggestion.text }}
+                </div>
+            </div>
+
             <div class="suggestions" v-show="suggestions.length > 0">
                 Search instead for: 
                 <a href="#" @click="query=suggestion; fetchNewResults()"
