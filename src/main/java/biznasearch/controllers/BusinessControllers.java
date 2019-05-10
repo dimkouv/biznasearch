@@ -9,7 +9,9 @@ import com.google.gson.Gson;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 
+import biznasearch.database.Getters;
 import biznasearch.models.Business;
+import biznasearch.models.Query;
 
 public class BusinessControllers {
 
@@ -29,6 +31,15 @@ public class BusinessControllers {
         List<String> similars = luc.getBusinessNameSuggestions(query, maxResults);
         long elapsedTimeMillis = System.currentTimeMillis() - start;
         System.out.println(">>> " + query + ": " + elapsedTimeMillis + "ms for " + similars.size() + " results");
+        return new Gson().toJson(similars);
+    }
+
+    public static String querySimilars(String query, LuceneWrapper luc, int maxResults)
+            throws IOException, ParseException, SQLException {
+        long start = System.currentTimeMillis();
+        List<Query> similars = Getters.similarQueries(luc.getDBConnection(), query, maxResults);
+        long elapsedTimeMillis = System.currentTimeMillis() - start;
+        System.out.println(">>> " + query + ": " + elapsedTimeMillis + "ms for " + similars.size() + " suggestions");
         return new Gson().toJson(similars);
     }
 }

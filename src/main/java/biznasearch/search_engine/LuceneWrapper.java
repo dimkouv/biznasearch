@@ -108,4 +108,8 @@ public class LuceneWrapper {
         
         return Getters.businessesByIDs(dbConnection, (ArrayList <String>) searchResults, orderBy);
     }
+
+    public Connection getDBConnection() {
+        return dbConnection;
+    }
 }

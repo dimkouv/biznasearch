@@ -64,8 +64,8 @@ public class Shortcuts {
         stmt.close();
     }
 
-    public static String sqlSimilarQueries(String query) {
-        return "SELECT text FROM queries WHERE text like '%" + query + "%' ORDER BY count DESC";
+    public static String sqlSimilarQueries(String query, int limit) {
+        return "SELECT id, text, count FROM queries WHERE text like '%" + query + "%' ORDER BY count DESC LIMIT " + limit;
     }
 
     public static void sqlLogQuery(Connection dbCon, String query) throws SQLException {

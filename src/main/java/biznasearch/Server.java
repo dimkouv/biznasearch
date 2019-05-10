@@ -203,6 +203,30 @@ public class Server {
 
             return "{\"message\":\"OK\"}";
         });
+
+        /*
+         * GET /query-suggest
+         *
+         * GET PARAMETERS -------------- query - A query to find similars
+         */
+        get("/query-suggest", (req, res) -> {
+            res.type("application/json");
+            String[] requiredParameters = { "query" };
+
+            for (String param : requiredParameters) {
+                if (req.queryParams(param) == null) {
+                    res.status(400);
+                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
+                }
+            }
+
+            if (req.queryParams("query").length() == 0) {
+                res.status(400);
+                return "{\"message\":\"'query' is empty.\"}";
+            }
+
+            return BusinessControllers.querySimilars(req.queryParams("query"), luc, 10);
+        });
     }
 
     // Enables CORS on requests. This method is an initialization method and should
