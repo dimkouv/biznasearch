@@ -75,36 +75,41 @@
             </div>
 
             <div class="results">
-                <div class="box clickable" v-for="r in results" @click="selectedBusiness=r">
+                <div class="box" v-for="r in results">
                     <article class="media">
                         <div class="media-content">
                             <div class="content">
-                                <strong><span class="fas fa-building"></span> {{ r.name }}</strong><br>
+                                <div class="clickable" @click="selectedBusiness=r">
+                                    <strong><span class="fas fa-building"></span> {{ r.name }}</strong><br>
 
-                                <small>{{ r.city }}</small>
+                                    <small>{{ r.city }}</small>
 
-                                <br>
-                                <small v-for="index in r.stars">
-                                    <span class="fas fa-star"></span>
-                                </small>
-                                <small>Reviews: {{ r.reviewCount }}</small>
+                                    <br>
+                                    <small v-for="index in r.stars">
+                                        <span class="fas fa-star"></span>
+                                    </small>
+                                    <small>Reviews: {{ r.reviewCount }}</small>
 
-                                <br>
+                                    <br>
 
-                                <div class="is-pulled-right">
-                                    <span class="address">
-                                        <span class="fas fa-map-marked"></span> {{ r.address }}
-                                    </span> <br>
+                                    <div class="is-pulled-right">
+                                        <span class="address">
+                                            <span class="fas fa-map-marked"></span> {{ r.address }}
+                                        </span> <br>
 
-                                    <span class="postal-code">
-                                        <span class="fas fa-mail-bulk"></span> {{ r.postalCode }}
-                                    </span>
+                                        <span class="postal-code">
+                                            <span class="fas fa-mail-bulk"></span> {{ r.postalCode }}
+                                        </span>
+                                    </div>
+                                    <br>
                                 </div>
-                                <br>
+
                                 <hr>
 
                                 <div class="categories is-pulled-right">
-                                    <span class="tag is-info category" v-for="c in r.categories.split(',')">
+                                    <span class="tag is-info category clickable"
+                                          v-for="c in r.categories.split(',')"
+                                          @click="query='categories: ' + c; fetchNewResults()">
                                         {{ c }}
                                     </span>
                                 </div>
