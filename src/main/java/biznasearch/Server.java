@@ -25,13 +25,15 @@ public class Server {
     private int port;
     private String city;
     private String authToken;
+    private String domain;
 
     private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port, String city,
-            String authToken) throws SQLException, IOException {
+            String authToken, String domain) throws SQLException, IOException {
         Connection dbConnection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
         this.port = port;
         this.city = city;
         this.authToken = authToken;
+        this.domain = domain;
 
         luc = new LuceneWrapper(indexDir, dbConnection);
     }
@@ -48,7 +50,8 @@ public class Server {
 
             Server server = new Server(props.getProperty("url"), props.getProperty("username"),
                     props.getProperty("password"), props.getProperty("indexDir"),
-                    Integer.parseInt(props.getProperty("port")), props.getProperty("city"), props.getProperty("token"));
+                    Integer.parseInt(props.getProperty("port")), props.getProperty("city"), props.getProperty("token"),
+                    props.getProperty("domain"));
 
             server.registerRoutesAndStart();
         } catch (Exception e) {
@@ -57,7 +60,7 @@ public class Server {
     }
 
     private void registerRoutesAndStart() {
-        System.out.println("Server running on http://127.0.0.1:" + port);
+        System.out.println("Server running on http://" + domain + ":" + port);
         Spark.port(port);
         Spark.staticFiles.location("/web");
         this.enableCors();
@@ -105,11 +108,11 @@ public class Server {
     // Enables CORS on requests. This method is an initialization method and should
     // be called once.
     private void enableCors() {
-        Spark.staticFiles.header("Access-Control-Allow-Origin", "127.0.0.1");
+        Spark.staticFiles.header("Access-Control-Allow-Origin", domain);
 
         before((req, res) -> {
-            res.header("Access-Control-Allow-Origin", "127.0.0.1");
-            res.header("Access-Control-Allow-Headers", "127.0.0.1");
+            res.header("Access-Control-Allow-Origin", domain);
+            res.header("Access-Control-Allow-Headers", domain);
         });
     }
 }
