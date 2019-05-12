@@ -1,7 +1,5 @@
 package biznasearch.search_engine;
 
-import static org.apache.lucene.search.highlight.TokenSources.getAnyTokenStream;
-
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,9 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
@@ -25,7 +21,11 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.*;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
+import org.apache.lucene.search.highlight.SimpleSpanFragmenter;
 import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
@@ -75,7 +75,8 @@ public class LuceneWrapper {
     public List<Business> search (String queryText, int resultsNum, String orderBy) throws ParseException, SQLException, IOException, InvalidTokenOffsetsException {
         List <String> searchResults = new ArrayList<>(); 
         List <String> fields = Arrays.asList("name", "categories", "review", "tip");
-        
+        List <String> highlightedText = new ArrayList<>();
+        List <String> fieldToSearch = new ArrayList<>();
         QueryParser queryParser;
         businessIndexReader = DirectoryReader.open(businessIndex);
         IndexSearcher searcher = new IndexSearcher(businessIndexReader);
@@ -86,6 +87,7 @@ public class LuceneWrapper {
             queryParser = new MultiFieldQueryParser(fields.toArray(new String[fields.size()]), analyzer);
         }else{
             if (!querySplit[1].matches("\\s+")){
+                querySplit[0] = querySplit[0].replaceAll("\\s+","");
                 if (!fields.contains(querySplit[0])){
                     queryText = "";
                     for (String s: querySplit){
@@ -95,7 +97,6 @@ public class LuceneWrapper {
                     queryParser = new MultiFieldQueryParser(fields.toArray(new String[fields.size()]), analyzer);    
                 }else{
                     queryParser = new QueryParser(querySplit[0], new StandardAnalyzer());
-                    
                 }
             }else{
                 querySplit = queryText.replaceAll("\\s+", "").split(":");
@@ -107,34 +108,44 @@ public class LuceneWrapper {
         Query query = queryParser.parse(queryText);
         System.out.println("Type of query: " + query.getClass().getSimpleName());
         System.out.println("And the query is: "+ query.toString());
+        String splitField[] = query.toString().split("([+-:\\s]+)");
+        for (String f: splitField){
+            if (fields.contains(f)){
+                fieldToSearch.add(f);
+            }
+        }
         SimpleHTMLFormatter formatter = new SimpleHTMLFormatter();
-        Highlighter highlighter = new Highlighter(formatter,new QueryScorer(query));
+        
         TopDocs topDocs = searcher.search(query, resultsNum);
+        QueryScorer queryScorer = new QueryScorer(query);
+        Highlighter highlighter = new Highlighter(formatter,queryScorer);
+        highlighter.setTextFragmenter(new SimpleSpanFragmenter(queryScorer, 200));
+        
         for (ScoreDoc top: topDocs.scoreDocs){
             searchResults.add(searcher.doc(top.doc).get("id"));
-            highlight(top.doc, searcher, businessIndexReader, queryParser.getField() , highlighter);
+            highlightedText = highlight(top.doc, searcher, businessIndexReader, fieldToSearch , highlighter);
+            System.out.println(highlightedText);
         }
         
         return Getters.businessesByIDs(dbConnection, searchResults, orderBy);
     }
 
-    public void highlight(int docId, IndexSearcher searcher, IndexReader indexReader, String field, Highlighter highlighter) throws IOException, InvalidTokenOffsetsException {
-        Document doc = searcher.doc(docId);
-        String text = doc.get(field);
-        TokenStream tokenStream = getAnyTokenStream(indexReader, docId, field, analyzer);
-        TextFragment  [] frag = highlighter.getBestTextFragments(tokenStream, text, false, 4);
-        float maxScore = 0;
-        TextFragment maxFrag = null ;
-        for (TextFragment f: frag){
-            System.out.println("x");
-            if (f != null && f.getScore()!=0){
-                if (f.getScore() > maxScore){
-                    maxScore = f.getScore();
-                    maxFrag = f ;
-                }
-            }
+    public List<String> highlight(int docId, IndexSearcher searcher, 
+        IndexReader indexReader, List<String> field, Highlighter highlighter) 
+            throws IOException, InvalidTokenOffsetsException {
+        
+        List <String> fragments = new ArrayList<>();
+        if (field== null){
+            System.err.println(">>> NULL ARRAYLIST PARAM");
+            return new ArrayList<>();
         }
-        // System.out.println("score: " + maxFrag.getScore() + ", frag: " + (maxFrag.toString()));
+        Document doc = searcher.doc(docId);
+        for (int i =0; i<field.size();i++){
+            String text = doc.get(field.get(i));
+            fragments.add(highlighter.getBestFragment(analyzer, field.get(i), text));
+        }
+
+        return fragments;
 
     }
 

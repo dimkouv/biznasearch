@@ -59,7 +59,7 @@ let app = new Vue({
 
         fetchFromQuerySuggestion(text) {
             this.query = text;
-            this.fetchNewResults();
+            this.newResults();
             setTimeout(() => {
                 this.querySuggestions = []
             }, 200)
@@ -109,6 +109,11 @@ let app = new Vue({
         newResults() {
             this.resultsNum = 10;
             this.fetchResults();
+        },
+
+        newResultsFromCategory(category){
+            this.query=`categories: "${category}"`;
+            this.newResults();
         }
     },
 

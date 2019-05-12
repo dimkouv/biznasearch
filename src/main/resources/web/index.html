@@ -108,7 +108,7 @@
                                 <div class="categories is-pulled-right">
                                     <span class="tag is-info category clickable"
                                           v-for="c in r.categories.split(',')"
-                                          @click="query='categories:' + c; newResults()">
+                                          @click="newResultsFromCategory(c)">
                                         {{ c }}
                                     </span>
                                 </div>
@@ -138,7 +138,7 @@
                         <div><strong>Stars:&nbsp;</strong>{{ selectedBusiness.stars }}</div>
                         <div><strong>Total reviews:&nbsp;</strong>{{ selectedBusiness.reviewCount }}</div>
                         <div><strong>Address:&nbsp;</strong>{{ selectedBusiness.address }}</div>
-                        <div><strong>Postal Code:&nbsp;</strong>{{ selectedBusiness.postalCode }}</div>
+                        <div><strong>Postal<!--  --> Code:&nbsp;</strong>{{ selectedBusiness.postalCode }}</div>
                         <div><strong>Categories:&nbsp;</strong>{{ selectedBusiness.categories }}</div>
                         <div><strong>Stars:&nbsp;</strong>{{ selectedBusiness.stars }}</div>
                         <div><strong>Clicks:&nbsp;</strong>{{ selectedBusiness.clicks }}</div>
