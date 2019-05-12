@@ -60,7 +60,7 @@ public class Server {
     }
 
     private void registerRoutesAndStart() {
-        System.out.println("Server running on http://" + domain + ":" + port);
+        System.out.println(String.format("Server running on http://%s:%d", domain, port));
         Spark.port(port);
         Spark.staticFiles.location("/web");
         this.enableCors();
@@ -103,6 +103,10 @@ public class Server {
         // Parameters:
         // query (string) - The target query
         get("/query-suggest", controllers::getQuerySuggestions);
+
+        // GET /server-stats
+        // Returns server statistics
+        get("/server-stats", controllers::getServerStatistics);
     }
 
     // Enables CORS on requests. This method is an initialization method and should
