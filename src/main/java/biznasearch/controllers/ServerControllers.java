@@ -1,22 +1,22 @@
 package biznasearch.controllers;
 
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.List;
+
+import com.google.gson.Gson;
+
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+
 import biznasearch.database.Getters;
 import biznasearch.database.Shortcuts;
 import biznasearch.models.Business;
 import biznasearch.models.Query;
 import biznasearch.search_engine.Indexer;
 import biznasearch.search_engine.LuceneWrapper;
-import com.google.gson.Gson;
-
-import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-
 import spark.Request;
 import spark.Response;
-
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 
 public class ServerControllers {
     private LuceneWrapper luc;
@@ -52,7 +52,7 @@ public class ServerControllers {
             org.apache.lucene.queryparser.classic.ParseException, IOException, InvalidTokenOffsetsException {
         asJSON(res);
 
-        if (missingParamsExist(req, new String[]{"query", "orderBy", "results-num"})) {
+        if (missingParamsExist(req, new String[] { "query", "order-by", "results-num" })) {
             res.status(400);
             return jsonMessage("Some required parameters are missing");
         }
@@ -63,11 +63,11 @@ public class ServerControllers {
         }
 
         List<String> acceptedOrderCols = Arrays.asList(
-                "review_count", "-review_count", "stars", "-stars", "clicks", "-clicks", "");
+            "review_count", "-review_count", "stars", "-stars", "clicks","-clicks", "");
 
-        if (!acceptedOrderCols.contains(req.queryParams("orderBy"))) {
+        if (!acceptedOrderCols.contains(req.queryParams("order-by"))) {
             res.status(404);
-            return jsonMessage("orderBy value is not valid");
+            return jsonMessage("order-by value is not valid");
         }
 
         Thread queryLogJob = new Thread(() -> {
@@ -82,9 +82,10 @@ public class ServerControllers {
         int resultsNum = Integer.parseInt(req.queryParams("results-num"));
 
         long start = System.currentTimeMillis();
-        List<Business> businesses = luc.search(req.queryParams("query"), resultsNum, req.queryParams("orderBy"));
+        List<Business> businesses = luc.search(req.queryParams("query"), resultsNum, req.queryParams("order-by"));
         long elapsedTimeMillis = System.currentTimeMillis() - start;
-        System.out.println(">>> " + req.queryParams("query") + ": " + elapsedTimeMillis + "ms for " + businesses.size() + " results");
+        System.out.println(
+            ">>> " + req.queryParams("query") + ": " + elapsedTimeMillis + "ms for " + businesses.size() + " results");
 
         return new Gson().toJson(businesses);
     }
@@ -92,7 +93,7 @@ public class ServerControllers {
     public String getQuerySpellSuggestions(Request req, Response res) throws IOException {
         asJSON(res);
 
-        if (missingParamsExist(req, new String[]{"query"})) {
+        if (missingParamsExist(req, new String[] { "query" })) {
             res.status(400);
             return jsonMessage("Some required parameters are missing");
         }
@@ -105,14 +106,15 @@ public class ServerControllers {
         long start = System.currentTimeMillis();
         List<String> similars = luc.getBusinessNameSuggestions(req.queryParams("query"), 10);
         long elapsedTimeMillis = System.currentTimeMillis() - start;
-        System.out.println(">>> " + req.queryParams("query") + ": " + elapsedTimeMillis + "ms for " + similars.size() + " results");
+        System.out.println(
+            ">>> " + req.queryParams("query") + ": " + elapsedTimeMillis + "ms for " + similars.size() + " results");
         return new Gson().toJson(similars);
     }
 
     public String startIndexing(Request req, Response res) {
         asJSON(res);
 
-        if (missingParamsExist(req, new String[]{"token"})) {
+        if (missingParamsExist(req, new String[] { "token" })) {
             res.status(400);
             return jsonMessage("Some required parameters are missing");
         }
@@ -138,7 +140,7 @@ public class ServerControllers {
     public String logClick(Request req, Response res) {
         asJSON(res);
 
-        if (missingParamsExist(req, new String[]{"business-id"})) {
+        if (missingParamsExist(req, new String[] { "business-id" })) {
             res.status(400);
             return jsonMessage("Some required parameters are missing");
         }
@@ -160,7 +162,7 @@ public class ServerControllers {
 
     public String getQuerySuggestions(Request req, Response res) throws SQLException {
         asJSON(res);
-        if (missingParamsExist(req, new String[]{"query"})) {
+        if (missingParamsExist(req, new String[] { "query" })) {
             res.status(400);
             return jsonMessage("Some required parameters are missing");
         }
@@ -173,7 +175,8 @@ public class ServerControllers {
         long start = System.currentTimeMillis();
         List<Query> similars = Getters.similarQueries(luc.getDBConnection(), req.queryParams("query"), 10);
         long elapsedTimeMillis = System.currentTimeMillis() - start;
-        System.out.println(">>> " + req.queryParams("query") + ": " + elapsedTimeMillis + "ms for " + similars.size() + " suggestions");
+        System.out.println(
+            ">>> " + req.queryParams("query") + ": " + elapsedTimeMillis + "ms for " + similars.size() + " suggestions");
         return new Gson().toJson(similars);
     }
 }

@@ -23,9 +23,9 @@ public class Shortcuts {
             return sql;
         } else {
             if (orderBy.startsWith("-")) {
-                sql += " ORDER BY " + orderBy.substring(1) + " DESC";
+                sql += " ORDER BY " + orderBy.substring(1) + " DESC, review_count DESC";
             } else {
-                sql += " ORDER BY " + orderBy + " ASC";
+                sql += " ORDER BY " + orderBy + " ASC, review_count DESC";
             }
         }
 
@@ -65,13 +65,13 @@ public class Shortcuts {
     }
 
     public static String sqlSimilarQueries(String query, int limit) {
-        return "SELECT id, text, count FROM queries WHERE text like '%" + query + "%' ORDER BY count DESC LIMIT " + limit;
+        return "SELECT id, text, count FROM queries WHERE text like '%" + query + "%' ORDER BY count DESC LIMIT "
+                + limit;
     }
 
     public static void sqlLogQuery(Connection dbCon, String query) throws SQLException {
         Statement stmt = dbCon.createStatement();
-        int updatedRecords = stmt.executeUpdate(
-            "UPDATE queries SET count=count+1 WHERE text='" + query + "'");
+        int updatedRecords = stmt.executeUpdate("UPDATE queries SET count=count+1 WHERE text='" + query + "'");
 
         if (updatedRecords == 0) {
             stmt.executeUpdate("INSERT INTO queries(text, count) VALUES ('" + query + "', 1)");

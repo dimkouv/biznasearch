@@ -1,10 +1,10 @@
 let app = new Vue({
     el: '#app',
     data: {
-        apiHost: 'http://localhost:8888',
+        apiHost: 'http://127.0.0.1:8888',
         query: '',
         resultsNum: 10,
-        orderBy: '-clicks',
+        orderBy: '',
         results: [],
         suggestions: [],
         querySuggestions: [],
@@ -20,44 +20,47 @@ let app = new Vue({
     },
 
     methods: {
-        fetchSuggestions() {
-            let self = this;
-
-            if (self.loading.suggestions || self.query.length < 1) {
+        fetchSpellSuggestions(query) {
+            /** Returns spell check suggestions for a target query. */
+            if (this.loading.suggestions || this.query.length < 1) {
                 return;
             }
             const t = new Date().getTime();
-            self.loading.suggestions = true;
-            self.results = [];
+            this.loading.suggestions = true;
+            this.results = [];
 
             $.ajax({
-                url: this.apiHost + '/spell-check',
-                data: {query: self.query}
-            })
+                    url: this.apiHost + '/spell-check',
+                    data: {
+                        query: query
+                    }
+                })
                 .then(res => {
-                    self.suggestions = res;
+                    this.suggestions = res;
                 })
                 .catch(err => {
-                    console.log(err);
+                    alert('Error while fetching spell suggestions.')
                 })
                 .then(() => {
-                    self.loading.suggestions = false;
+                    this.loading.suggestions = false;
                 })
         },
 
-        fetchQuerySuggestions() {
-            let self = this;
-
+        fetchQuerySuggestions(query) {
+            /** Sets query suggestions, ideally when user is typing */
             $.ajax({
-                url: this.apiHost + '/query-suggest',
-                data: {query: self.query}
-            })
+                    url: this.apiHost + '/query-suggest',
+                    data: {
+                        query: query
+                    }
+                })
                 .then(res => {
-                    self.querySuggestions = res;
+                    this.querySuggestions = res;
                 })
         },
 
         fetchFromQuerySuggestion(text) {
+            /** Fetch results by clicking on query suggestion */
             this.query = text;
             this.newResults();
             setTimeout(() => {
@@ -66,64 +69,66 @@ let app = new Vue({
         },
 
         fetchResults() {
-            let self = this;
+            /** fetch results */
+            setTimeout(() => { this.querySuggestions = [] }, 200);
 
-            setTimeout(() => {
-                this.querySuggestions = []
-            }, 200);
-
-            if (self.loading.results || self.query.length < 1) {
+            if (this.loading.results || this.query.length < 1) {
                 return;
             }
             const t = new Date().getTime();
-            self.loading.results = true;
-            self.results = [];
-            self.page = 1;
+            this.loading.results = true;
+            this.results = [];
+            this.page = 1;
 
             $.ajax({
-                url: this.apiHost + '/search',
-                data: {
-                    query: self.query,
-                    orderBy: self.orderBy,
-                    'results-num': self.resultsNum
-                }
-            })
+                    url: this.apiHost + '/search',
+                    data: {
+                        query: this.query,
+                        'order-by': this.orderBy,
+                        'results-num': this.resultsNum
+                    }
+                })
                 .then(res => {
-                    self.stats.queryTimeMs = new Date().getTime() - t;
-                    self.stats.queryResults = res.length;
-                    self.results = res;
+                    this.stats.queryTimeMs = new Date().getTime() - t;
+                    this.stats.queryResults = res.length;
+                    this.results = res;
                 })
                 .catch(err => {
-                    console.log(err);
+                    alert('Error while fetching business results.')
                 })
                 .then(() => {
-                    self.loading.results = false;
+                    this.loading.results = false;
                 })
         },
 
         populateResults() {
+            /** fetch new reuslts by clicking 'load more' button */
             this.resultsNum += 10;
             this.fetchResults();
         },
 
         newResults() {
+            /** fetch results normally */
             this.resultsNum = 10;
             this.fetchResults();
         },
 
-        newResultsFromCategory(category){
-            this.query=`categories: "${category}"`;
+        newResultsFromCategory(category) {
+            /** fetch results by clicking on a category */
+            this.query = `categories: "${category}"`;
             this.newResults();
         }
     },
 
     watch: {
         query() {
-            this.fetchSuggestions();
-            this.fetchQuerySuggestions()
+            /** fetch suggestions as the user is typing */
+            this.fetchSpellSuggestions(this.query);
+            this.fetchQuerySuggestions(this.query);
         },
 
         selectedBusiness() {
+            /** add business click stats when a business is opened */
             if (this.selectedBusiness !== null) {
                 $.ajax({
                     method: 'post',
@@ -137,6 +142,7 @@ let app = new Vue({
         },
 
         orderBy() {
+            /** fetch ordered results */
             this.newResults()
         }
     }

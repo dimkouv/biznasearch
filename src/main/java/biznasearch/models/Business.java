@@ -13,7 +13,8 @@ public class Business {
     private String categories;
     private int clicks;
 
-    public Business(String id, String name, double lat, double lng, String city, int stars, int reviewCount, String address, String postalCode, String categories, int clicks) {
+    public Business(String id, String name, double lat, double lng, String city, int stars, int reviewCount,
+            String address, String postalCode, String categories, int clicks) {
         this.id = id;
         this.name = name;
         this.lat = lat;

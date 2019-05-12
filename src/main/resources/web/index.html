@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
@@ -11,162 +12,168 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <title>Biznasearch</title>
 </head>
-<body>
-<div id="app">
-    <section class="section">
-        <div class="container" id="main">
-            <h1 class="title">
-                <i class="fas fa-search"></i>
-                Biznasearch
-            </h1>
 
-            <p class="subtitle">
-                Search engine for Yelp businesses.
-            </p>
+<body>
+    <div id="app">
+        <section class="section">
+            <div class="container" id="main">
+                <h1 class="title">
+                    <i class="fas fa-search"></i>
+                    Biznasearch
+                </h1>
+
+                <p class="subtitle">
+                    Search engine for Yelp businesses.
+                </p>
+
+                <hr>
+
+                <div class="form">
+                    <div class="field has-addons">
+                        <div :class="{'control': true, 'is-loading': loading.results}">
+                            <input class="input is-rounded" @keyup.enter="newResults" placeholder="Query..." type="text"
+                                v-model="query">
+                            </input>
+                        </div>
+
+                        <div class="control">
+                            <button @click="newResults" class="button is-primary"
+                                :disabled="loading.results">Search</button>
+                        </div>
+
+                        <div class="stats-for-geeks" v-show="stats.queryResults > 0">
+                            <small>{{stats.queryResults }} result{{ (stats.queryResults > 1) ? 's' : ''}} in
+                                {{ stats.queryTimeMs }} ms</small>
+                        </div>
+
+                        <div class="control">
+                            <div class="select">
+                                <select v-model="orderBy">
+                                    <option value="">Default ordering</option>
+                                    <option value="-stars">Stars descending</option>
+                                    <option value="stars">Stars ascending</option>
+                                    <option value="-review_count">Number of reviews descending</option>
+                                    <option value="review_count">Number of reviews</option>
+                                    <option value="clicks">Number of clicks ascending</option>
+                                    <option value="-clicks">Number of clicks descending</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="query-suggestions" v-show="querySuggestions.length > 0">
+                    <div v-for="querySuggestion in querySuggestions" class="query-suggestion"
+                        @click="fetchFromQuerySuggestion(querySuggestion.text)">
+                        {{ querySuggestion.text }}
+                    </div>
+                </div>
+
+                <div class="suggestions" v-show="suggestions.length > 0">
+                    Search instead for:
+                    <a href="#" @click="query=suggestion; newResults()" v-for="suggestion in suggestions"
+                        class="button is-small suggestion">
+                        {{ suggestion }}
+                    </a>
+                </div>
+
+                <div class="results">
+                    <div class="box" v-for="r in results">
+                        <article class="media">
+                            <div class="media-content">
+                                <div class="content">
+                                    <div class="clickable" @click="selectedBusiness=r">
+                                        <strong><span class="fas fa-building"></span> {{ r.name }}</strong><br>
+
+                                        <small>{{ r.city }}</small>
+
+                                        <br>
+                                        <small v-for="index in r.stars">
+                                            <span class="fas fa-star"></span>
+                                        </small>
+                                        <small>Reviews: {{ r.reviewCount }}</small>
+
+                                        <br>
+
+                                        <div class="is-pulled-right">
+                                            <span class="address">
+                                                <span class="fas fa-map-marked"></span> {{ r.address }}
+                                            </span> <br>
+
+                                            <span class="postal-code">
+                                                <span class="fas fa-mail-bulk"></span> {{ r.postalCode }}
+                                            </span>
+                                        </div>
+                                        <br>
+                                    </div>
+
+                                    <hr>
+
+                                    <div class="categories is-pulled-right">
+                                        <span class="tag is-info category clickable"
+                                            v-for="c in r.categories.split(',')" @click="newResultsFromCategory(c)">
+                                            {{ c }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+
+                    <div v-show="results.length > 0">
+                        <button @click="populateResults" class="button is-rounded is-primary">
+                            <span class="fas fa-download"></span> Load more...
+                        </button>
+                        <button @click="scroll(0,0)" class="button is-rounded">
+                            <span class="fas fa-chevron-up"></span> Go to top
+                        </button>
+                    </div>
+                </div>
+
+                <div class="modal is-active" v-if="selectedBusiness !== null">
+                    <div class="modal-background"></div>
+                    <div class="modal-content">
+                        <div class="box">
+                            <div class="title">{{ selectedBusiness.name }}</div>
+                            <div class="subtitle"><span class="fas fa-map-marked"></span> {{ selectedBusiness.city }}
+                            </div>
+                            <hr>
+
+                            <div><strong>Stars:&nbsp;</strong>{{ selectedBusiness.stars }}</div>
+                            <div><strong>Total reviews:&nbsp;</strong>{{ selectedBusiness.reviewCount }}</div>
+                            <div><strong>Address:&nbsp;</strong>{{ selectedBusiness.address }}</div>
+                            <div><strong>Postal
+                                    <!--  --> Code:&nbsp;</strong>{{ selectedBusiness.postalCode }}</div>
+                            <div><strong>Categories:&nbsp;</strong>{{ selectedBusiness.categories }}</div>
+                            <div><strong>Stars:&nbsp;</strong>{{ selectedBusiness.stars }}</div>
+                            <div><strong>Clicks:&nbsp;</strong>{{ selectedBusiness.clicks }}</div>
+
+                            <hr>
+                            <div class="button is-rounded is-primary is-pulled-right" @click="selectedBusiness=null">
+                                Close</div>
+                        </div>
+                    </div>
+                    <button class="modal-close is-large" aria-label="close" @click="selectedBusiness=null"></button>
+                </div>
+
+            </div>
 
             <hr>
 
-            <div class="form">        
-                <div class="field has-addons">
-                    <div :class="{'control': true, 'is-loading': loading.results}">
-                        <input class="input is-rounded" @keyup.enter="newResults"
-                            placeholder="Query..." type="text" v-model="query">
-                        </input>
-                    </div>
-
-                    <div class="control">
-                        <button @click="newResults" class="button is-primary" :disabled="loading.results">Search</button>
-                    </div>
-
-                    <div class="stats-for-geeks" v-show="stats.queryResults > 0">
-                        <small>{{stats.queryResults }} result{{ (stats.queryResults > 1) ? 's' : ''}} in {{ stats.queryTimeMs }} ms</small>
-                    </div>
-
-                    <div class="control">
-                        <div class="select">
-                            <select v-model="orderBy">
-                                <option value="">Default</option>
-                                <option value="-stars">Stars descending</option>
-                                <option value="stars">Stars ascending</option>
-                                <option value="-review_count">Number of reviews descending</option>
-                                <option value="review_count">Number of reviews</option>
-                                <option value="clicks">Number of clicks ascending</option>
-                                <option value="-clicks">Number of clicks descending</option>
-                            </select>
-                        </div>
-                    </div>
+            <footer class="footer">
+                <div class="content has-text-centered">
+                    <p>
+                        <strong>Biznasearch</strong> by Achilleas Alvaro Hysi and Dimitrios N. Kouveris<br>
+                        Developed using Lucene for <span class="is-color-primary">information retrieval</span>
+                        course<br>
+                        <small>Computer Science &amp; Engineering Department, UOI</small>
+                    </p>
                 </div>
-            </div>
+            </footer>
+        </section>
+    </div>
 
-            <div class="query-suggestions" v-show="querySuggestions.length > 0">
-                <div v-for="querySuggestion in querySuggestions" class="query-suggestion"
-                    @click="fetchFromQuerySuggestion(querySuggestion.text)">
-                    {{ querySuggestion.text }}
-                </div>
-            </div>
-
-            <div class="suggestions" v-show="suggestions.length > 0">
-                Search instead for: 
-                <a href="#" @click="query=suggestion; newResults()"
-                    v-for="suggestion in suggestions" class="button is-small suggestion">
-                    {{ suggestion }}
-                </a>
-            </div>
-
-            <div class="results">
-                <div class="box" v-for="r in results">
-                    <article class="media">
-                        <div class="media-content">
-                            <div class="content">
-                                <div class="clickable" @click="selectedBusiness=r">
-                                    <strong><span class="fas fa-building"></span> {{ r.name }}</strong><br>
-
-                                    <small>{{ r.city }}</small>
-
-                                    <br>
-                                    <small v-for="index in r.stars">
-                                        <span class="fas fa-star"></span>
-                                    </small>
-                                    <small>Reviews: {{ r.reviewCount }}</small>
-
-                                    <br>
-
-                                    <div class="is-pulled-right">
-                                        <span class="address">
-                                            <span class="fas fa-map-marked"></span> {{ r.address }}
-                                        </span> <br>
-
-                                        <span class="postal-code">
-                                            <span class="fas fa-mail-bulk"></span> {{ r.postalCode }}
-                                        </span>
-                                    </div>
-                                    <br>
-                                </div>
-
-                                <hr>
-
-                                <div class="categories is-pulled-right">
-                                    <span class="tag is-info category clickable"
-                                          v-for="c in r.categories.split(',')"
-                                          @click="newResultsFromCategory(c)">
-                                        {{ c }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-                </div>
-
-                <div v-show="results.length > 0">
-                    <button @click="populateResults" class="button is-rounded is-primary">
-                        <span class="fas fa-download"></span> Load more...
-                    </button>
-                    <button @click="scroll(0,0)" class="button is-rounded">
-                        <span class="fas fa-chevron-up"></span> Go to top
-                    </button>
-                </div>
-            </div>
-
-            <div class="modal is-active" v-if="selectedBusiness !== null">
-                <div class="modal-background"></div>
-                <div class="modal-content">
-                    <div class="box">
-                        <div class="title">{{ selectedBusiness.name }}</div>
-                        <div class="subtitle"><span class="fas fa-map-marked"></span> {{ selectedBusiness.city }}</div>
-                        <hr>
-
-                        <div><strong>Stars:&nbsp;</strong>{{ selectedBusiness.stars }}</div>
-                        <div><strong>Total reviews:&nbsp;</strong>{{ selectedBusiness.reviewCount }}</div>
-                        <div><strong>Address:&nbsp;</strong>{{ selectedBusiness.address }}</div>
-                        <div><strong>Postal<!--  --> Code:&nbsp;</strong>{{ selectedBusiness.postalCode }}</div>
-                        <div><strong>Categories:&nbsp;</strong>{{ selectedBusiness.categories }}</div>
-                        <div><strong>Stars:&nbsp;</strong>{{ selectedBusiness.stars }}</div>
-                        <div><strong>Clicks:&nbsp;</strong>{{ selectedBusiness.clicks }}</div>
-
-                        <hr>
-                        <div class="button is-rounded is-primary is-pulled-right"
-                            @click="selectedBusiness=null">Close</div>
-                    </div>
-                </div>
-                <button class="modal-close is-large" aria-label="close" @click="selectedBusiness=null"></button>
-            </div>
-
-        </div>
-
-        <hr>
-
-        <footer class="footer">
-            <div class="content has-text-centered">
-                <p>
-                    <strong>Biznasearch</strong> by Achilleas Alvaro Hysi and Dimitrios N. Kouveris<br>
-                    Developed using Lucene for <span class="is-color-primary">information retrieval</span> course<br>
-                    <small>Computer Science &amp; Engineering Department, UOI</small>
-                </p>
-            </div>
-        </footer>
-    </section>
-</div>
-
-<script src="app.js"></script>
+    <script src="app.js"></script>
 </body>
+
 </html>
