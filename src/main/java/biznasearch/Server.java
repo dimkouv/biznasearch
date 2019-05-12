@@ -10,17 +10,13 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
 
+import biznasearch.controllers.ServerControllers;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
-import biznasearch.controllers.BusinessControllers;
-import biznasearch.database.Shortcuts;
-import biznasearch.search_engine.Indexer;
 import biznasearch.search_engine.LuceneWrapper;
 import spark.Spark;
 
@@ -28,17 +24,15 @@ public class Server {
     private LuceneWrapper luc;
     private int port;
     private String city;
-    private String indexDir;
-    private Connection dbConnection;
+    private String authToken;
 
-    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port, String city)
-            throws SQLException, IOException {
-        this.dbConnection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
-        this.indexDir = indexDir;
+    private Server(String dbUrl, String dbUsername, String dbPassword, String indexDir, int port, String city, String authToken) throws SQLException, IOException {
+        Connection dbConnection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
         this.port = port;
         this.city = city;
+        this.authToken = authToken;
 
-        luc = new LuceneWrapper(indexDir, this.dbConnection);
+        luc = new LuceneWrapper(indexDir, dbConnection);
     }
 
     public static void main(String[] args) {
@@ -51,9 +45,15 @@ public class Server {
             InputStream input = new FileInputStream("src/main/resources/application.properties");
             props.load(input);
 
-            Server server = new Server(props.getProperty("url"), props.getProperty("username"),
-                    props.getProperty("password"), props.getProperty("indexDir"),
-                    Integer.parseInt(props.getProperty("port")), props.getProperty("city"));
+            Server server = new Server(
+                props.getProperty("url"),
+                props.getProperty("username"),
+                props.getProperty("password"),
+                props.getProperty("indexDir"),
+                Integer.parseInt(props.getProperty("port")),
+                props.getProperty("city"),
+                props.getProperty("token")
+            );
 
             server.registerRoutesAndStart();
         } catch (Exception e) {
@@ -61,172 +61,48 @@ public class Server {
         }
     }
 
-    private void registerRoutesAndStart() throws IOException {
+    private void registerRoutesAndStart() {
         System.out.println("Server running on http://127.0.0.1:" + port);
-        Properties props = new Properties();
-        InputStream input = new FileInputStream("src/main/resources/application.properties");
-        props.load(input);
         Spark.port(port);
         Spark.staticFiles.location("/web");
         this.enableCors();
 
-        /*
-         * GET /businesses
-         *
-         * GET PARAMETERS -------------- query - A query for the businesses
-         */
-        get("/businesses", (req, res) -> {
-            res.type("application/json");
-            String[] requiredParameters = { "query" };
+        ServerControllers controllers = new ServerControllers(luc, authToken, city);
 
-            for (String param : requiredParameters) {
-                if (req.queryParams(param) == null) {
-                    res.status(400);
-                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
-                }
-            }
+        // GET /search
+        // Performs business search and returns the results in json.
+        //
+        // Parameters:
+        //      query (string) - The lucene query to execute
+        get("/search", controllers::getSearchResults);
 
-            if (req.queryParams("query").length() == 0) {
-                res.status(400);
-                return "{\"message\":\"'query' is empty.\"}";
-            }
+        // GET /spell-check
+        // Performs spell check and returns suggestions.
+        //
+        // Parameters:
+        //      query (string) - The lucene query to execute
+        get("/spell-check", controllers::getQuerySpellSuggestions);
 
-            List<String> acceptedOrderCols = Arrays.asList(
-                "review_count", "-review_count", "stars", "-stars", "clicks", "-clicks", "");
-            if (!acceptedOrderCols.contains(req.queryParams("orderBy"))) {
-                res.status(404);
-                return "{\"message\":\"'orderBy="+req.queryParams("orderBy")+"' is not valid.\"}";
-            }
+        // POST /index
+        // Performs indexing operation.
+        //
+        // Parameters:
+        //      token (string) - Authentication token (defined in properties)
+        post("/index", controllers::startIndexing);
 
-            Thread queryLogJob = new Thread(() -> {
-                try {
-                    Shortcuts.sqlLogQuery(dbConnection, req.queryParams("query"));
-                } catch (SQLException v) {
-                    System.out.println(v);
-                    v.printStackTrace();
-                }
-            });
-            queryLogJob.start();
+        // POST /click
+        // Adds a new click to a business.
+        //
+        // Parameters:
+        //      business-id (string) - ID of the business to increment the clicks
+        post("/click", controllers::logClick);
 
-            return BusinessControllers.businessSearch(req.queryParams("query"), 0, luc, 10, req.queryParams("orderBy"));
-        });
-
-        /*
-         * GET /suggest
-         *
-         * GET PARAMETERS -------------- query - A query to find similars
-         */
-        get("/suggest", (req, res) -> {
-            res.type("application/json");
-            String[] requiredParameters = { "query" };
-
-            for (String param : requiredParameters) {
-                if (req.queryParams(param) == null) {
-                    res.status(400);
-                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
-                }
-            }
-
-            if (req.queryParams("query").length() == 0) {
-                res.status(400);
-                return "{\"message\":\"'query' is empty.\"}";
-            }
-
-            return BusinessControllers.businessNameSimilars(req.queryParams("query"), luc, 10);
-        });
-
-        /*
-         * GET /start-indexing
-         *
-         * GET PARAMETERS -------------- authtoken - A token used for authentication
-         */
-        get("/index", (req, res) -> {
-            res.type("application/json");
-            String[] requiredParameters = { "token" };
-
-            for (String param : requiredParameters) {
-                if (req.queryParams(param) == null) {
-                    res.status(400);
-                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
-                }
-            }
-
-            if (!req.queryParams("token").equals(props.getProperty("token"))) {
-                res.status(400);
-                return "{\"message\":\"Authentication error.\"}";
-            }
-
-            Thread indexJob = new Thread(() -> {
-                try {
-                    Indexer indexer = new Indexer(indexDir, dbConnection);
-                    indexer.startIndexing(city);
-                } catch (SQLException | IOException v) {
-                    System.out.println(v);
-                    v.printStackTrace();
-                }
-            });
-            indexJob.start();
-
-            return "{\"message\":\"Indexing operation started...\"}";
-        });
-
-        /*
-         * POST /click
-         * 
-         * Called when a user clicks on a business that appears in the results.
-         *
-         * POST PARAMETERS -------------- business-id - ID of the business to increment its clicks
-         */
-        post("/click", (req, res) -> {
-            res.type("application/json");
-            String[] requiredParameters = { "business-id" };
-
-            for (String param : requiredParameters) {
-                if (req.queryParams(param) == null) {
-                    res.status(400);
-                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
-                }
-            }
-
-            Thread statsJob = new Thread(() -> {
-                try {
-                    String businessID = req.queryParams("business-id");
-                    if (businessID != null && businessID.length() == 22) {
-                        Shortcuts.sqlAddBusinessClick(dbConnection, businessID);
-                    }
-                } catch (SQLException v) {
-                    System.out.println(v);
-                    v.printStackTrace();
-                }
-            });
-            statsJob.start();
-
-            return "{\"message\":\"OK\"}";
-        });
-
-        /*
-         * GET /query-suggest
-         *
-         * GET PARAMETERS -------------- query - A query to find similars
-         */
-        get("/query-suggest", (req, res) -> {
-            res.type("application/json");
-            String[] requiredParameters = { "query" };
-
-            for (String param : requiredParameters) {
-                if (req.queryParams(param) == null) {
-                    res.status(400);
-                    return "{\"message\":\"'" + param + "' wasn't found in parameters.\"}";
-                }
-            }
-
-            if (req.queryParams("query").length() == 0) {
-                res.status(400);
-                return "{\"message\":\"'query' is empty.\"}";
-            }
-
-            return BusinessControllers.querySimilars(req.queryParams("query"), luc, 10);
-        });
+        // POST /query-suggest
+        // Suggest a query, ideally called when user types
+        //
+        // Parameters:
+        //      query (string) - The target query
+        get("/query-suggest", controllers::getQuerySuggestions);
     }
 
     // Enables CORS on requests. This method is an initialization method and should
@@ -237,7 +113,6 @@ public class Server {
         before((req, res) -> {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Allow-Headers", "*");
-            res.type("application/json");
         });
     }
 }

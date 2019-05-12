@@ -28,16 +28,15 @@ import java.util.List;
 public class LuceneWrapper {
     private Analyzer analyzer;
     private Connection dbConnection;
-
+    private String indexDir;
     private Directory businessIndex;
-
     private IndexReader businessIndexReader;
-
     private SpellChecker businessNameSpellChecker;
 
     public LuceneWrapper(String indexDir, Connection connection) throws IOException {
         this.analyzer = new StandardAnalyzer();
         this.dbConnection = connection;
+        this.indexDir = indexDir;
 
         Path path = Paths.get(indexDir, "businesses");
         businessIndex = FSDirectory.open(path);
@@ -111,5 +110,9 @@ public class LuceneWrapper {
 
     public Connection getDBConnection() {
         return dbConnection;
+    }
+
+    public String getIndexDir() {
+        return indexDir;
     }
 }

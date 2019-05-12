@@ -1,8 +1,9 @@
 let app = new Vue({
     el: '#app',
     data: {
+        apiHost: 'http://localhost:8888',
         query: '',
-        orderBy: '',
+        orderBy: '-clicks',
         results: [],
         suggestions: [],
         querySuggestions: [],
@@ -29,8 +30,8 @@ let app = new Vue({
             self.results = [];
 
             $.ajax({
-                url: 'http://localhost:8888/suggest',
-                data: { query: self.query }
+                url: this.apiHost + '/spell-check',
+                data: {query: self.query}
             })
                 .then(res => {
                     self.suggestions = res;
@@ -47,8 +48,8 @@ let app = new Vue({
             let self = this;
 
             $.ajax({
-                url: 'http://localhost:8888/query-suggest',
-                data: { query: self.query }
+                url: this.apiHost + '/query-suggest',
+                data: {query: self.query}
             })
                 .then(res => {
                     self.querySuggestions = res;
@@ -56,25 +57,29 @@ let app = new Vue({
         },
 
         fetchFromQuerySuggestion(text) {
-            this.query=text
-            this.fetchNewResults()
-            setTimeout(() => { this.querySuggestions=[] }, 200)
+            this.query = text;
+            this.fetchNewResults();
+            setTimeout(() => {
+                this.querySuggestions = []
+            }, 200)
         },
 
         fetchNewResults() {
             let self = this;
 
-            setTimeout(() => { this.querySuggestions=[] }, 200)
+            setTimeout(() => {
+                this.querySuggestions = []
+            }, 200);
 
             if (self.loading.results || self.query.length < 1) {
                 return;
-            }            
+            }
             const t = new Date().getTime();
             self.loading.results = true;
             self.results = [];
 
             $.ajax({
-                url: 'http://localhost:8888/businesses',
+                url: this.apiHost + '/search',
                 data: {
                     query: self.query,
                     orderBy: self.orderBy
@@ -96,7 +101,7 @@ let app = new Vue({
 
     watch: {
         query() {
-            this.fetchSuggestions()
+            this.fetchSuggestions();
             this.fetchQuerySuggestions()
         },
 
@@ -104,12 +109,12 @@ let app = new Vue({
             if (this.selectedBusiness !== null) {
                 $.ajax({
                     method: 'post',
-                    url: 'http://localhost:8888/click',
+                    url: this.apiHost + '/click',
                     data: {
                         'business-id': this.selectedBusiness.id
                     }
-                })
-                this.selectedBusiness.clicks ++
+                });
+                this.selectedBusiness.clicks++
             }
         },
 
