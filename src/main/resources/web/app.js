@@ -3,6 +3,7 @@ let app = new Vue({
     data: {
         apiHost: 'http://localhost:8888',
         query: '',
+        resultsNum: 10,
         orderBy: '-clicks',
         results: [],
         suggestions: [],
@@ -64,7 +65,7 @@ let app = new Vue({
             }, 200)
         },
 
-        fetchNewResults() {
+        fetchResults() {
             let self = this;
 
             setTimeout(() => {
@@ -77,12 +78,14 @@ let app = new Vue({
             const t = new Date().getTime();
             self.loading.results = true;
             self.results = [];
+            self.page = 1;
 
             $.ajax({
                 url: this.apiHost + '/search',
                 data: {
                     query: self.query,
-                    orderBy: self.orderBy
+                    orderBy: self.orderBy,
+                    'results-num': self.resultsNum
                 }
             })
                 .then(res => {
@@ -96,6 +99,16 @@ let app = new Vue({
                 .then(() => {
                     self.loading.results = false;
                 })
+        },
+
+        populateResults() {
+            this.resultsNum += 10;
+            this.fetchResults();
+        },
+
+        newResults() {
+            this.resultsNum = 10;
+            this.fetchResults();
         }
     },
 
@@ -119,7 +132,7 @@ let app = new Vue({
         },
 
         orderBy() {
-            this.fetchNewResults()
+            this.newResults()
         }
     }
 });

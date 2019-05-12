@@ -74,6 +74,8 @@ public class Server {
         //
         // Parameters:
         //      query (string) - The lucene query to execute
+        //      results-num (int) - Number of results
+        //      orderBy (string) - The lucene query to execute
         get("/search", controllers::getSearchResults);
 
         // GET /spell-check

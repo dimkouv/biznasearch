@@ -7,6 +7,9 @@ import biznasearch.models.Query;
 import biznasearch.search_engine.Indexer;
 import biznasearch.search_engine.LuceneWrapper;
 import com.google.gson.Gson;
+
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+
 import spark.Request;
 import spark.Response;
 
@@ -45,10 +48,11 @@ public class ServerControllers {
         return "{\"message\": \"" + message + "\"}";
     }
 
-    public String getSearchResults(Request req, Response res) throws SQLException, org.apache.lucene.queryparser.classic.ParseException, IOException {
+    public String getSearchResults(Request req, Response res) throws SQLException,
+            org.apache.lucene.queryparser.classic.ParseException, IOException, InvalidTokenOffsetsException {
         asJSON(res);
 
-        if (missingParamsExist(req, new String[]{"query", "orderBy"})) {
+        if (missingParamsExist(req, new String[]{"query", "orderBy", "results-num"})) {
             res.status(400);
             return jsonMessage("Some required parameters are missing");
         }
@@ -75,8 +79,10 @@ public class ServerControllers {
         });
         queryLogJob.start();
 
+        int resultsNum = Integer.parseInt(req.queryParams("results-num"));
+
         long start = System.currentTimeMillis();
-        List<Business> businesses = luc.search(req.queryParams("query"), 0, 10, req.queryParams("orderBy"));
+        List<Business> businesses = luc.search(req.queryParams("query"), resultsNum, req.queryParams("orderBy"));
         long elapsedTimeMillis = System.currentTimeMillis() - start;
         System.out.println(">>> " + req.queryParams("query") + ": " + elapsedTimeMillis + "ms for " + businesses.size() + " results");
 

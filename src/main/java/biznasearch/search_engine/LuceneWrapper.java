@@ -65,15 +65,14 @@ public class LuceneWrapper {
      * It splits the query text implementing the ability to search by field.
      * like field:queryText.
      * @param queryText The text the user gave to the interface.
-     * @param page Page size
-     * @param maxResults Number of max results the top docs will return.
+     * @param resultsNum Number of results to fetch
      * @param orderBy A businesses db field to order the results (prepend a minus symbol to sort descending)
      * @return List of businesses' ids.
      * @throws ParseException
      * @throws SQLException
      * @throws IOException
      */
-    public List<Business> search (String queryText, int page, int maxResults, String orderBy) throws ParseException, SQLException, IOException, InvalidTokenOffsetsException {
+    public List<Business> search (String queryText, int resultsNum, String orderBy) throws ParseException, SQLException, IOException, InvalidTokenOffsetsException {
         List <String> searchResults = new ArrayList<>(); 
         List <String> fields = Arrays.asList("name", "categories", "review", "tip");
         
@@ -110,8 +109,7 @@ public class LuceneWrapper {
         System.out.println("And the query is: "+ query.toString());
         SimpleHTMLFormatter formatter = new SimpleHTMLFormatter();
         Highlighter highlighter = new Highlighter(formatter,new QueryScorer(query));
-        TopDocs topDocs = searcher.search(query, maxResults);
-        
+        TopDocs topDocs = searcher.search(query, resultsNum);
         for (ScoreDoc top: topDocs.scoreDocs){
             searchResults.add(searcher.doc(top.doc).get("id"));
             highlight(top.doc, searcher, businessIndexReader, queryParser.getField() , highlighter);
@@ -144,11 +142,7 @@ public class LuceneWrapper {
         return dbConnection;
     }
 
-<<<<<<< Updated upstream
     public String getIndexDir() {
         return indexDir;
     }
-=======
-
->>>>>>> Stashed changes
 }

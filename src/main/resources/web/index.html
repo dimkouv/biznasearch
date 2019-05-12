@@ -29,32 +29,31 @@
             <div class="form">        
                 <div class="field has-addons">
                     <div :class="{'control': true, 'is-loading': loading.results}">
-                        <input class="input is-rounded" @keyup.enter="fetchNewResults"
+                        <input class="input is-rounded" @keyup.enter="newResults"
                             placeholder="Query..." type="text" v-model="query">
                         </input>
                     </div>
 
                     <div class="control">
-                        <button @click="fetchNewResults" class="button is-primary" :disabled="loading.results">Search</button>
+                        <button @click="newResults" class="button is-primary" :disabled="loading.results">Search</button>
                     </div>
 
                     <div class="stats-for-geeks" v-show="stats.queryResults > 0">
                         <small>{{stats.queryResults }} result{{ (stats.queryResults > 1) ? 's' : ''}} in {{ stats.queryTimeMs }} ms</small>
                     </div>
-                </div>
 
-                <div style="float: right; margin-top: -40px;">
-                    <div><small>Order by</small></div>
-                    <div class="select">
-                        <select v-model="orderBy">
-                            <option value="">Default</option>
-                            <option value="-stars">Stars descending</option>
-                            <option value="stars">Stars ascending</option>
-                            <option value="-review_count">Number of reviews descending</option>
-                            <option value="review_count">Number of reviews</option>
-                            <option value="clicks">Number of clicks ascending</option>
-                            <option value="-clicks">Number of clicks descending</option>
-                        </select>
+                    <div class="control">
+                        <div class="select">
+                            <select v-model="orderBy">
+                                <option value="">Default</option>
+                                <option value="-stars">Stars descending</option>
+                                <option value="stars">Stars ascending</option>
+                                <option value="-review_count">Number of reviews descending</option>
+                                <option value="review_count">Number of reviews</option>
+                                <option value="clicks">Number of clicks ascending</option>
+                                <option value="-clicks">Number of clicks descending</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -68,7 +67,7 @@
 
             <div class="suggestions" v-show="suggestions.length > 0">
                 Search instead for: 
-                <a href="#" @click="query=suggestion; fetchNewResults()"
+                <a href="#" @click="query=suggestion; newResults()"
                     v-for="suggestion in suggestions" class="button is-small suggestion">
                     {{ suggestion }}
                 </a>
@@ -109,7 +108,7 @@
                                 <div class="categories is-pulled-right">
                                     <span class="tag is-info category clickable"
                                           v-for="c in r.categories.split(',')"
-                                          @click="query='categories: ' + c; fetchNewResults()">
+                                          @click="query='categories:' + c; newResults()">
                                         {{ c }}
                                     </span>
                                 </div>
@@ -117,8 +116,16 @@
                         </div>
                     </article>
                 </div>
-            </div>
 
+                <div v-show="results.length > 0">
+                    <button @click="populateResults" class="button is-rounded is-primary">
+                        <span class="fas fa-download"></span> Load more...
+                    </button>
+                    <button @click="scroll(0,0)" class="button is-rounded">
+                        <span class="fas fa-chevron-up"></span> Go to top
+                    </button>
+                </div>
+            </div>
 
             <div class="modal is-active" v-if="selectedBusiness !== null">
                 <div class="modal-background"></div>

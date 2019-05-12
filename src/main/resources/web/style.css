@@ -36,3 +36,7 @@
 .query-suggestion:hover {
     cursor: pointer;
 }
+
+section.section {
+    background-color: rgb(247, 247, 247);
+}
