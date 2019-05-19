@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -105,38 +106,46 @@ public class Indexer {
             indexWriter.addDocument(docEntry);
             cnt++;
 
-            if (cnt % 100 == 0) {
+            if (cnt % 1000 == 0) {
                 double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
-                System.out.printf("\tindexed %d businesses in %.2fsec\n", cnt, elapsedTimeSec);
+                System.out.println("\tIndexed " + cnt + " businesses in " + elapsedTimeSec + "sec");
             }
         }
 
         indexWriter.close();
+        businessIndex.close();
         double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
-        System.out.printf("\tindexed %d businesses in %.2fsec\n", cnt, elapsedTimeSec);
+        System.out.println("\tIndexed " + cnt + " businesses in " + elapsedTimeSec + "sec");
     }
 
     /**
      * Generates spell checking dictionary for business names.
      */
     public void createBusinessNameSpellIndex() throws IOException {
-        System.out.println(">>> Starting business.name spell check indexing");
-        long startTime = System.currentTimeMillis();
+        List<String> spellFields = new ArrayList<>(Arrays.asList("name", "tip", "reviews", "categories"));
 
-        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
-
-        Directory spellCheckDir = FSDirectory.open(Paths.get(indexDir, "spell_check_business_name"));
         Directory businessesIndexDir = FSDirectory.open(Paths.get(indexDir, "businesses"));
-
         DirectoryReader businessIndexReader = DirectoryReader.open(businessesIndexDir);
-        LuceneDictionary dictionary = new LuceneDictionary(businessIndexReader, "name");
 
-        SpellChecker spell = new SpellChecker(spellCheckDir);
-        spell.indexDictionary(dictionary, indexWriterConfig, false);
-        spell.close();
+        for (String field : spellFields) {
+            long startTime = System.currentTimeMillis();
+            System.out.println(">>> Starting business." + field + " spell check indexing");
+
+            IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+            indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
+            Directory spellCheckDir = FSDirectory.open(Paths.get(indexDir, "spell_check_business"));
+
+            LuceneDictionary dictionary = new LuceneDictionary(businessIndexReader, field);
+            SpellChecker spell = new SpellChecker(spellCheckDir);
+            spell.indexDictionary(dictionary, indexWriterConfig, false);
+            spell.close();
+
+            spellCheckDir.close();
+            double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
+            System.out.println("\tCompleted in " + elapsedTimeSec + "sec");
+        }
+
+        businessIndexReader.close();
         businessesIndexDir.close();
-        double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
-        System.out.printf("\tcompleted in " + elapsedTimeSec + "sec");
     }
 }
