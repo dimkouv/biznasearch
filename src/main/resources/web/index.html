@@ -18,8 +18,7 @@
         <section class="section">
             <div class="container" id="main">
                 <h1 class="title">
-                    <i class="fas fa-search"></i>
-                    Biznasearch
+                    <a href="/" class="has-text-primary"><i class="fas fa-search"></i> Biznasearch</a>
                 </h1>
 
                 <p class="subtitle">
@@ -106,8 +105,8 @@
                                         <small>{{ r.business.city }}</small>
 
                                         <br>
-                                        <small v-for="index in r.stars">
-                                            <span class="fas fa-star"></span>
+                                        <small v-for="index in r.business.stars">
+                                            <span class="fas fa-star has-text-warning"></span>
                                         </small>
                                         <small>Reviews: {{ r.business.reviewCount }}</small>
 
