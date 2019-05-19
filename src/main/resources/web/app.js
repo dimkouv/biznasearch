@@ -28,8 +28,8 @@ let app = new Vue({
         fetchStatsForGeeks() {
             /** Sets query suggestions, ideally when user is typing */
             $.ajax({
-                url: this.apiHost + '/server-stats'
-            })
+                    url: this.apiHost + '/server-stats'
+                })
                 .then(res => {
                     this.statsForGeeks = res;
                 })
@@ -85,7 +85,9 @@ let app = new Vue({
 
         fetchResults() {
             /** fetch results */
-            setTimeout(() => { this.querySuggestions = [] }, 200);
+            setTimeout(() => {
+                this.querySuggestions = []
+            }, 200);
 
             if (this.loading.results || this.query.length < 1) {
                 return;

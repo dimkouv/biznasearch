@@ -6,15 +6,14 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import biznasearch.models.SearchResult;
 import com.google.gson.Gson;
 
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
 
 import biznasearch.database.Getters;
 import biznasearch.database.Shortcuts;
-import biznasearch.models.Business;
 import biznasearch.models.Query;
+import biznasearch.models.SearchResult;
 import biznasearch.search_engine.Indexer;
 import biznasearch.search_engine.LuceneWrapper;
 import spark.Request;

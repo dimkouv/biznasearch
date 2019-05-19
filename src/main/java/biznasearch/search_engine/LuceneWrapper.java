@@ -1,8 +1,15 @@
 package biznasearch.search_engine;
 
-import biznasearch.database.Getters;
-import biznasearch.models.Business;
-import biznasearch.models.SearchResult;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -16,20 +23,19 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.*;
+import org.apache.lucene.search.highlight.Fragmenter;
+import org.apache.lucene.search.highlight.Highlighter;
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
+import org.apache.lucene.search.highlight.QueryScorer;
+import org.apache.lucene.search.highlight.SimpleSpanFragmenter;
+import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import biznasearch.database.Getters;
+import biznasearch.models.Business;
+import biznasearch.models.SearchResult;
 
 public class LuceneWrapper {
     private Analyzer analyzer;
@@ -45,8 +51,7 @@ public class LuceneWrapper {
 
         Path path = Paths.get(indexDir, "businesses");
         businessIndex = FSDirectory.open(path);
-        businessNameSpellChecker = new SpellChecker(
-                FSDirectory.open(Paths.get(indexDir, "spell_check_business_name")));
+        businessNameSpellChecker = new SpellChecker(FSDirectory.open(Paths.get(indexDir, "spell_check_business")));
     }
 
     public List<String> getBusinessNameSuggestions(String queryText, int maxResults) throws IOException {
@@ -128,7 +133,7 @@ public class LuceneWrapper {
     }
 
     public String highLightQuery(Query query, ScoreDoc scoreDoc, String field, IndexReader indexReader,
-                                 IndexSearcher searcher) throws IOException, InvalidTokenOffsetsException {
+            IndexSearcher searcher) throws IOException, InvalidTokenOffsetsException {
         if (field == null) {
             return "";
         }

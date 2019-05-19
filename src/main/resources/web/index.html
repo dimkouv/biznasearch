@@ -18,8 +18,7 @@
         <section class="section">
             <div class="container" id="main">
                 <h1 class="title">
-                    <i class="fas fa-search"></i>
-                    Biznasearch
+                    <a href="/" class="has-text-primary"><i class="fas fa-search"></i> Biznasearch</a>
                 </h1>
 
                 <p class="subtitle">
@@ -32,7 +31,7 @@
                     <div class="field has-addons">
                         <div :class="{'control': true, 'is-loading': loading.results}">
                             <input class="input is-rounded" @keyup.enter="newResults" placeholder="Query..." type="text"
-                                v-model="query">
+                                style="width: 30vw" v-model="query">
                             </input>
                         </div>
 
@@ -106,8 +105,8 @@
                                         <small>{{ r.business.city }}</small>
 
                                         <br>
-                                        <small v-for="index in r.stars">
-                                            <span class="fas fa-star"></span>
+                                        <small v-for="index in r.business.stars">
+                                            <span class="fas fa-star has-text-warning"></span>
                                         </small>
                                         <small>Reviews: {{ r.business.reviewCount }}</small>
 
@@ -129,7 +128,8 @@
 
                                     <div class="categories is-pulled-right">
                                         <span class="tag is-info category clickable"
-                                            v-for="c in r.business.categories.split(',')" @click="newResultsFromCategory(c)">
+                                            v-for="c in r.business.categories.split(',')"
+                                            @click="newResultsFromCategory(c)">
                                             {{ c }}
                                         </span>
                                     </div>
