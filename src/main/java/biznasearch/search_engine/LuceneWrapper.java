@@ -9,11 +9,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
@@ -23,13 +22,9 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.Fragmenter;
-import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleSpanFragmenter;
-import org.apache.lucene.search.highlight.TokenSources;
 import org.apache.lucene.search.spell.SpellChecker;
+import org.apache.lucene.search.uhighlight.UnifiedHighlighter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -116,10 +111,23 @@ public class LuceneWrapper {
         HashMap<String, String> businessHighlight = new HashMap<>();
 
         for (ScoreDoc top : topDocs.scoreDocs) {
-            String businessID = searcher.doc(top.doc).get("id");
-            String highlight = highLightQuery(query, top, queryParser.getField(), businessIndexReader, searcher);
-            businessIDs.add(businessID);
-            businessHighlight.put(businessID, highlight);
+            businessIDs.add(searcher.doc(top.doc).get("id"));
+        }
+
+        UnifiedHighlighter highlighter = new UnifiedHighlighter(searcher, analyzer);
+        String[] highlightFields = { "review", "tip", "categories", "name" };
+        Map<String, String[]> fragments = highlighter.highlightFields(highlightFields, query, topDocs);
+        for (Map.Entry<String, String[]> frag : fragments.entrySet()) {
+            int i = 0;
+            for (String text : frag.getValue()) {
+                String businessID = businessIDs.get(i);
+                if (businessHighlight.containsKey(businessID)) {
+                    businessHighlight.put(businessID, businessHighlight.get(businessID) + "..." + text);
+                } else {
+                    businessHighlight.put(businessID, text);
+                }
+                i++;
+            }
         }
 
         List<Business> businesses = Getters.businessesByIDs(dbConnection, businessIDs, orderBy);
@@ -130,22 +138,6 @@ public class LuceneWrapper {
         }
 
         return results;
-    }
-
-    public String highLightQuery(Query query, ScoreDoc scoreDoc, String field, IndexReader indexReader,
-            IndexSearcher searcher) throws IOException, InvalidTokenOffsetsException {
-        if (field == null) {
-            return "";
-        }
-        QueryScorer queryScorer = new QueryScorer(query);
-        Fragmenter fragmenter = new SimpleSpanFragmenter(queryScorer);
-        Highlighter highlighter = new Highlighter(queryScorer);
-        highlighter.setTextFragmenter(fragmenter);
-        Document document = searcher.doc(scoreDoc.doc);
-        String text = document.get(field);
-        TokenStream tokenStream = TokenSources.getAnyTokenStream(indexReader, scoreDoc.doc, field, analyzer);
-        String fragment = highlighter.getBestFragment(tokenStream, text);
-        return fragment;
     }
 
     public Connection getDBConnection() {
