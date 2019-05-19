@@ -1,0 +1,96 @@
+\subsection{\textgreek{Επεξεργασία Ερωτημάτων}}
+\textgreek {
+    Ο διακομιστής στέλνει αίτημα αναζήτησης και καλεί την μέθοδο $search$ στο αρχείο $LuceneWrapper.java$.
+    Η μέθοδος αυτή επεξεργάζεται το κείμενο του ερωτήματος και εντοπίζει αν είναι ερώτημα ενός ή πολλαπλών όρων.
+    Αν είναι ένας όρος, κάνει αναζήτηση σε όλα τα πεδία του ευρετηρίου (δηλ. όνομα, κατηγορίες, κριτικές, υποδείξεις)
+    δημιουργώντας έναν $multiFieldParser$.
+    Αν πάλι το ερωτημά μας περιέχει ειδικούς χαρακτήρες και εντολές δημιουργείται $BooleanParser$ ή $PhraseParser$ για
+    δυαδικές αναζητήσεις και αναζήτηση ολόκληρης φράσης, λέξης κλειδί αντίστοιχα.
+    Η κλάσση $QueryParser$ επιτρέπει επίσης $wildcard$ αναζητήσεις και $term$ $boosting$.
+}
+
+\begin{lstlisting}[language=Java]
+public List<SearchResult> search(String queryText, int resultsNum, String orderBy)
+throws ParseException, SQLException, IOException, InvalidTokenOffsetsException {
+
+    List<SearchResult> results = new ArrayList<>();
+    List<String> fields = Arrays.asList("name", "categories", "review", "tip");
+    QueryParser queryParser;
+    IndexReader businessIndexReader = DirectoryReader.open(businessIndex);
+    IndexSearcher searcher = new IndexSearcher(businessIndexReader);
+    String[] querySplit = queryText.split(":");
+
+    if (querySplit.length == 1) {
+        queryText = querySplit[0];
+        queryParser = new MultiFieldQueryParser(fields.toArray(new String[fields.size()]), analyzer);
+    } else {
+        if (!querySplit[1].matches("\\s+")) {
+            querySplit[0] = querySplit[0].replaceAll("\\s+", "");
+            if (!fields.contains(querySplit[0])) {
+                queryText = "";
+                for (String s : querySplit) {
+                   queryText = queryText + " " + s;
+                }
+                queryText = queryText + "";
+                queryParser = new MultiFieldQueryParser(fields.toArray(new String[fields.size()]), analyzer);
+            } else {
+                queryParser = new QueryParser(querySplit[0], new StandardAnalyzer());
+            }
+        } else {
+            querySplit = queryText.replaceAll("\\s+", "").split(":");
+            queryText = querySplit[0];
+            queryParser = new MultiFieldQueryParser(fields.toArray(new String[fields.size()]), analyzer);
+        }
+    }
+
+    Query query = queryParser.parse(queryText);
+    System.out.println("Lucene Query: " + query.toString());
+
+    TopDocs topDocs = searcher.search(query, resultsNum);
+    List<String> businessIDs = new ArrayList<>();
+    HashMap<String, String> businessHighlight = new HashMap<>();
+
+    for (ScoreDoc top : topDocs.scoreDocs) {
+        String businessID = searcher.doc(top.doc).get("id");
+        String highlight = highLightQuery(query, top, queryParser.getField(), businessIndexReader, searcher);
+        businessIDs.add(businessID);
+        businessHighlight.put(businessID, highlight);
+    }
+
+    List<Business> businesses = Getters.businessesByIDs(dbConnection, businessIDs, orderBy);
+    for (int i = 0; i < businesses.size(); i++) {
+        Business business = businesses.get(i);
+        String highlight = businessHighlight.get(business.getId());
+        results.add(new SearchResult(business, highlight));
+    }
+
+    return results;
+}
+
+\end{lstlisting}
+
+\subsection{\textgreek{Επιστροφή αποτελεσμάτων}}
+\textgreek{
+Τα $ids$ απο τα κορυφαία αποτελέσματα αποθηκεύονται σε μια λίστα αλφαριθμητικών, η οποία χρησιμοποιείται για να συνταχθεί
+ενα $sql$ ερώτημα στην βάση μας και να επιστραφούν τα δεδομένα για την κάθε επιχείρηση.
+}
+
+\subsection{Highlighting}
+\textgreek{
+Με το πέρας της αναζήτησης χρησιμοποιούμε την κλάσση της $lucene$ $highlighter$ για να βρούμε και να
+επισημάνουμε το κείμενο της αναζήτησης μας.
+Η αναζήτηση αυτή επιστρέφει ένα $html formatted$ κείμενο, το οποίο το χρησιμοποιούμε στην προβολή των αποτελεσμάτων.
+}
+
+\subsection{\textgreek{Αναδιάταξη Αποτελεσμάτων}}
+\textgreek{
+Η μεθοδός μας παίρνει σαν παράμετρο τον τρόπο με τον οποίο θέλουμε να ταξινομήσουμε τα αποτελέσματά μας.
+Η παράμετρος αυτή περνάει σαν όρισμα στην μέθοδο που συντάσσουμε το $sql$ ερώτημα και χρησιμοποιείται απο την βάση.
+Η βάση αναδιατάσσει τα αποτελέσματα με βάση:
+}
+\begin{enumerate}
+    \item\textgreek{ Με βάση τα αστέρια της κάθε επιχείρησης (με φθίνουσα ή αύξουσα σειρά)}
+    \item\textgreek{ Με βάση το πλήθος των κριτικών της κάθε επιχείρησης (φθίνουσα ή αύξουσα σειρά)}
+    \item\textgreek{ Με βάση το πλήθος των χρηστών που πάτησαν πάνω στην επιχείρηση σε προηγούμενες αναζητήσεις ($clickthrough$)}
+    \item\textgreek{ Με βάση την προεπιλεγμένη κατάταξη της $lucene$ }
+\end{enumerate}

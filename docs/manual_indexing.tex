@@ -1,0 +1,92 @@
+
+
+\lstset{style=mystyle}
+
+\subsection{\textgreek{Δημιουργία ευρετηρίων}}
+\paragraph{\textgreek{Έγγραφα}}\textgreek{
+Χρησιμοποιήσαμε τις μεθόδους της $lucene$ για την δημιουργία των εγγράφων.
+Συγκεκριμένα ένα εγγράφο για κάθε επιχείρηση με πεδία, $business\_id$, $business\_name$, $business\_categories$,
+$review\_id$, $review\_text$, $tip\_id$, $tip\_text$.
+Δηλαδή σε κάθε έγγραφο αποθηκεύουμε όλη την πληροφορία που θα χρειαστούμε για κάθε επιχείρηση.
+}
+
+\begin{lstlisting}[language=Java]
+
+private void createBusinessIndex(String city) throws SQLException, IOException {
+    Document docEntry;
+    Path path = Paths.get(indexDir, "businesses");
+    Directory businessIndex = FSDirectory.open(path);
+    IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+    indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.CREATE);
+    IndexWriter indexWriter = new IndexWriter(businessIndex, indexWriterConfig);
+
+    String sqlQuery = sqlBusinessesIdxColsOfCity(city);
+    List<String> columns = Arrays.asList("id", "name", "categories");
+
+    PreparedStatement pst = dbConnection.prepareStatement(sqlQuery);
+    pst.setFetchSize(100);
+    ResultSet rs = pst.executeQuery();
+
+    long startTime = System.currentTimeMillis();
+    int cnt = 0;
+
+    System.out.println(">>> Starting indexing");
+    while (rs.next()) {
+        docEntry = new Document();
+        for (int i = 0; i < columns.size(); i++) {
+            docEntry.add(new Field(columns.get(i), rs.getString(i + 1), TextField.TYPE_STORED));
+        }
+
+        String sqlReviews = Shortcuts.sqlReviewsIdxColsWhereBusinessIdIs(rs.getString(1));
+        PreparedStatement pstRevs = dbConnection.prepareStatement(sqlReviews);
+        pstRevs.setFetchSize(100);
+        ResultSet rsRevs = pstRevs.executeQuery();
+        while (rsRevs.next()) {
+            docEntry.add(new Field("review_id", rsRevs.getString(1), TextField.TYPE_STORED));
+            docEntry.add(new Field("review", rsRevs.getString(2), TextField.TYPE_STORED));
+        }
+
+        String sqlTips = Shortcuts.sqlTipsIdxColsWhereBusinessIdIs(rs.getString(1));
+        PreparedStatement pstTips = dbConnection.prepareStatement(sqlTips);
+        pstTips.setFetchSize(100);
+        ResultSet rsTips = pstTips.executeQuery();
+        while (rsTips.next()) {
+            docEntry.add(new Field("tip_id", rsTips.getString(1), TextField.TYPE_STORED));
+            docEntry.add(new Field("tip", rsTips.getString(2), TextField.TYPE_STORED));
+        }
+
+        indexWriter.addDocument(docEntry);
+        cnt++;
+
+        if (cnt % 100 == 0) {
+            double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
+            System.out.printf("\tindexed %d businesses in %.2fsec\n", cnt, elapsedTimeSec);
+        }
+    }
+
+    indexWriter.close();
+    double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
+    System.out.printf("\tindexed %d businesses in %.2fsec\n", cnt, elapsedTimeSec);
+
+\end{lstlisting}
+
+\textgreek{
+Όπως βλέπουμε στο παραπάνω κομμάτι κώδικα, όταν ο χρήστης ζητήσει την δημιουργία ευρετηρίων στέλνουμε ένα αίτημα
+στην βάση δεδομένων το οποίο μας επιστρέφει τις πληροφορίες που χρειαζόμαστε για την κάθε επιχείρηση. Σε κάθε επανάληψη
+δημιουργούμε το εγγραφο και τα πεδία και τα εισάγουμε στη στο ευρετήριο μας με την εντολή
+}
+\lstset{style=secondStyle}
+\begin{lstlisting}
+indexWriter.addDocument(docEntry);
+\end{lstlisting}
+
+\subsection{SpellChecker}
+\textgreek{
+Υλοποιήσαμε την πρόβλεψη λέξεων και την διόρθωση λαθών. Χρησιμοποιήσαμε την κλάσση $Spellchecker$ της $lucene$ για να
+δημιουργήσουμε ευρετήριο στο οποίο θα βρούμε τις πιο συναφείς λέξεις για να προτείνουμε στον χρήστη. Η συνάφεια
+μετριέται με την χρήση της $Levenstein$ απόστασης.
+}
+\lstset{style=mystyle}
+\begin{lstlisting}
+
+\end{lstlisting}
