@@ -1,14 +1,8 @@
 package biznasearch.search_engine;
 
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
+import biznasearch.database.Getters;
+import biznasearch.models.Business;
+import biznasearch.models.SearchResult;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
@@ -22,25 +16,26 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.Fragmenter;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleSpanFragmenter;
-import org.apache.lucene.search.highlight.TokenSources;
+import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.search.spell.SpellChecker;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import biznasearch.database.Getters;
-import biznasearch.models.Business;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 public class LuceneWrapper {
     private Analyzer analyzer;
     private Connection dbConnection;
     private String indexDir;
     private Directory businessIndex;
-    private IndexReader businessIndexReader;
     private SpellChecker businessNameSpellChecker;
 
     public LuceneWrapper(String indexDir, Connection connection) throws IOException {
@@ -50,8 +45,8 @@ public class LuceneWrapper {
 
         Path path = Paths.get(indexDir, "businesses");
         businessIndex = FSDirectory.open(path);
-        businessNameSpellChecker = new SpellChecker(FSDirectory.open(Paths.get(indexDir, "spell_check_business_name")));
-
+        businessNameSpellChecker = new SpellChecker(
+                FSDirectory.open(Paths.get(indexDir, "spell_check_business_name")));
     }
 
     public List<String> getBusinessNameSuggestions(String queryText, int maxResults) throws IOException {
@@ -64,7 +59,7 @@ public class LuceneWrapper {
     /**
      * This is the main search method. It splits the query text implementing the
      * ability to search by field. like field:queryText.
-     * 
+     *
      * @param queryText  The text the user gave to the interface.
      * @param resultsNum Number of results to fetch
      * @param orderBy    A businesses db field to order the results (prepend a minus
@@ -75,15 +70,15 @@ public class LuceneWrapper {
      * @throws IOException
      * @throws InvalidTokenOffsetsException
      */
-    public List<Business> search(String queryText, int resultsNum, String orderBy)
+    public List<SearchResult> search(String queryText, int resultsNum, String orderBy)
             throws ParseException, SQLException, IOException, InvalidTokenOffsetsException {
 
-        List<String> searchResults = new ArrayList<>();
+        List<SearchResult> results = new ArrayList<>();
         List<String> fields = Arrays.asList("name", "categories", "review", "tip");
         QueryParser queryParser;
-        businessIndexReader = DirectoryReader.open(businessIndex);
+        IndexReader businessIndexReader = DirectoryReader.open(businessIndex);
         IndexSearcher searcher = new IndexSearcher(businessIndexReader);
-        String querySplit[] = queryText.split(":");
+        String[] querySplit = queryText.split(":");
 
         if (querySplit.length == 1) {
             queryText = querySplit[0];
@@ -109,25 +104,32 @@ public class LuceneWrapper {
         }
 
         Query query = queryParser.parse(queryText);
-        System.out.println("Type of query: " + query.getClass().getSimpleName());
-        System.out.println("And the query is: " + query.toString());
+        System.out.println("Lucene Query: " + query.toString());
 
         TopDocs topDocs = searcher.search(query, resultsNum);
+        List<String> businessIDs = new ArrayList<>();
+        HashMap<String, String> businessHighlight = new HashMap<>();
 
         for (ScoreDoc top : topDocs.scoreDocs) {
-            searchResults.add(searcher.doc(top.doc).get("id"));
-            highLightQuery(query, top, queryParser.getField(), businessIndexReader, searcher);
+            String businessID = searcher.doc(top.doc).get("id");
+            String highlight = highLightQuery(query, top, queryParser.getField(), businessIndexReader, searcher);
+            businessIDs.add(businessID);
+            businessHighlight.put(businessID, highlight);
         }
 
-        return Getters.businessesByIDs(dbConnection, searchResults, orderBy);
+        List<Business> businesses = Getters.businessesByIDs(dbConnection, businessIDs, orderBy);
+        for (int i = 0; i < businesses.size(); i++) {
+            Business business = businesses.get(i);
+            String highlight = businessHighlight.get(business.getId());
+            results.add(new SearchResult(business, highlight));
+        }
+
+        return results;
     }
 
     public String highLightQuery(Query query, ScoreDoc scoreDoc, String field, IndexReader indexReader,
-            IndexSearcher searcher) throws IOException, InvalidTokenOffsetsException {
-        String docId="";
-        String review_id="";
-        if (field == null){
-            System.out.println(">>> Null field param");
+                                 IndexSearcher searcher) throws IOException, InvalidTokenOffsetsException {
+        if (field == null) {
             return "";
         }
         QueryScorer queryScorer = new QueryScorer(query);
@@ -135,17 +137,12 @@ public class LuceneWrapper {
         Highlighter highlighter = new Highlighter(queryScorer);
         highlighter.setTextFragmenter(fragmenter);
         Document document = searcher.doc(scoreDoc.doc);
-        docId= document.get("id");
-        review_id = document.get("review_id");
-        System.out.println("docId: "+docId+"\nreview_id: "+review_id);
-        String text =document.get(field);
+        String text = document.get(field);
         TokenStream tokenStream = TokenSources.getAnyTokenStream(indexReader, scoreDoc.doc, field, analyzer);
         String fragment = highlighter.getBestFragment(tokenStream, text);
-        System.out.println("The fragment is: "+fragment);
         return fragment;
-
     }
-    
+
     public Connection getDBConnection() {
         return dbConnection;
     }

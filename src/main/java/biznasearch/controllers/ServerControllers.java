@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import biznasearch.models.SearchResult;
 import com.google.gson.Gson;
 
 import org.apache.lucene.search.highlight.InvalidTokenOffsetsException;
@@ -96,8 +97,8 @@ public class ServerControllers {
         queryLogJob.start();
 
         int resultsNum = Integer.parseInt(req.queryParams("results-num"));
-        List<Business> businesses = luc.search(req.queryParams("query"), resultsNum, req.queryParams("order-by"));
-        String json = new Gson().toJson(businesses);
+        List<SearchResult> results = luc.search(req.queryParams("query"), resultsNum, req.queryParams("order-by"));
+        String json = new Gson().toJson(results);
         log(req, startTime);
         return json;
     }

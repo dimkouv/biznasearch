@@ -82,26 +82,26 @@
                         <article class="media">
                             <div class="media-content">
                                 <div class="content">
-                                    <div class="clickable" @click="selectedBusiness=r">
-                                        <strong><span class="fas fa-building"></span> {{ r.name }}</strong><br>
+                                    <div class="clickable" @click="selectedBusiness=r.business">
+                                        <strong><span class="fas fa-building"></span> {{ r.business.name }}</strong><br>
 
-                                        <small>{{ r.city }}</small>
+                                        <small>{{ r.business.city }}</small>
 
                                         <br>
                                         <small v-for="index in r.stars">
                                             <span class="fas fa-star"></span>
                                         </small>
-                                        <small>Reviews: {{ r.reviewCount }}</small>
+                                        <small>Reviews: {{ r.business.reviewCount }}</small>
 
                                         <br>
 
                                         <div class="is-pulled-right">
                                             <span class="address">
-                                                <span class="fas fa-map-marked"></span> {{ r.address }}
+                                                <span class="fas fa-map-marked"></span> {{ r.business.address }}
                                             </span> <br>
 
                                             <span class="postal-code">
-                                                <span class="fas fa-mail-bulk"></span> {{ r.postalCode }}
+                                                <span class="fas fa-mail-bulk"></span> {{ r.business.postalCode }}
                                             </span>
                                         </div>
                                         <br>
@@ -111,9 +111,13 @@
 
                                     <div class="categories is-pulled-right">
                                         <span class="tag is-info category clickable"
-                                            v-for="c in r.categories.split(',')" @click="newResultsFromCategory(c)">
+                                            v-for="c in r.business.categories.split(',')" @click="newResultsFromCategory(c)">
                                             {{ c }}
                                         </span>
+                                    </div>
+
+                                    <div v-if="r.highlight">
+                                        <span v-html="r.highlight"></span>
                                     </div>
                                 </div>
                             </div>
