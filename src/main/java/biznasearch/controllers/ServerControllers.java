@@ -206,7 +206,6 @@ public class ServerControllers {
     }
 
     public String getServerStatistics(Request req, Response res) {
-        long startTime = System.currentTimeMillis();
         asJSON(res);
 
         HashMap<String, String> stats = new HashMap<String, String>();
@@ -220,7 +219,6 @@ public class ServerControllers {
         stats.put("total_serve_time", String.format("%dms", totalResponseTimeMs));
 
         String json = new Gson().toJson(stats);
-        log(req, startTime);
         return json;
     }
 }

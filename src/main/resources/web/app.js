@@ -16,10 +16,25 @@ let app = new Vue({
             results: false,
             suggestions: false
         },
-        selectedBusiness: null
+        selectedBusiness: null,
+        statsForGeeks: null
+    },
+
+    mounted: function () {
+        this.runStatsPolling();
     },
 
     methods: {
+        fetchStatsForGeeks() {
+            /** Sets query suggestions, ideally when user is typing */
+            $.ajax({
+                url: this.apiHost + '/server-stats'
+            })
+                .then(res => {
+                    this.statsForGeeks = res;
+                })
+        },
+
         fetchSpellSuggestions(query) {
             /** Returns spell check suggestions for a target query. */
             if (this.loading.suggestions || this.query.length < 1) {
@@ -117,6 +132,14 @@ let app = new Vue({
             /** fetch results by clicking on a category */
             this.query = `categories: "${category}"`;
             this.newResults();
+        },
+
+        runStatsPolling() {
+            setInterval(() => {
+                if (this.statsForGeeks) {
+                    this.fetchStatsForGeeks();
+                }
+            }, 1000);
         }
     },
 

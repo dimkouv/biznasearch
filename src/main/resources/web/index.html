@@ -44,6 +44,24 @@
                         <div class="stats-for-geeks" v-show="stats.queryResults > 0">
                             <small>{{stats.queryResults }} result{{ (stats.queryResults > 1) ? 's' : ''}} in
                                 {{ stats.queryTimeMs }} ms</small>
+                            <div>
+                                <a v-if="!statsForGeeks" @click="fetchStatsForGeeks" href="#">Stats for geeks</a>
+                                <a v-else @click="statsForGeeks = null" href="#">Hide stats</a>
+                            </div>
+                            <div v-if="statsForGeeks">
+                                <div>
+                                    <small>Average response</small>
+                                    <strong>{{ statsForGeeks.average_response_time}}</strong>
+                                </div>
+                                <div>
+                                    <small>Total compute time</small>
+                                    <strong>{{ statsForGeeks.total_serve_time}}</strong>
+                                </div>
+                                <div>
+                                    <small>Served requests</small>
+                                    <strong>{{ statsForGeeks.total_served_requests}}</strong>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="control">
