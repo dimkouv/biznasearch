@@ -122,7 +122,7 @@ public class Indexer {
      * Generates spell checking dictionary for business names.
      */
     public void createBusinessNameSpellIndex() throws IOException {
-        List<String> spellFields = new ArrayList<>(Arrays.asList("name", "tip", "reviews", "categories"));
+        List<String> spellFields = new ArrayList<>(Arrays.asList("name", "tip", "review", "categories"));
 
         Directory businessesIndexDir = FSDirectory.open(Paths.get(indexDir, "businesses"));
         DirectoryReader businessIndexReader = DirectoryReader.open(businessesIndexDir);
