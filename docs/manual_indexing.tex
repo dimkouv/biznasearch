@@ -73,7 +73,7 @@ private void createBusinessIndex(String city) throws SQLException, IOException {
 \textgreek{
 Όπως βλέπουμε στο παραπάνω κομμάτι κώδικα, όταν ο χρήστης ζητήσει την δημιουργία ευρετηρίων στέλνουμε ένα αίτημα
 στην βάση δεδομένων το οποίο μας επιστρέφει τις πληροφορίες που χρειαζόμαστε για την κάθε επιχείρηση. Σε κάθε επανάληψη
-δημιουργούμε το εγγραφο και τα πεδία και τα εισάγουμε στη στο ευρετήριο μας με την εντολή
+δημιουργούμε το εγγραφο και τα πεδία και τα εισάγουμε στο ευρετήριο μας με την εντολή:
 }
 \lstset{style=secondStyle}
 \begin{lstlisting}
@@ -83,10 +83,38 @@ indexWriter.addDocument(docEntry);
 \subsection{SpellChecker}
 \textgreek{
 Υλοποιήσαμε την πρόβλεψη λέξεων και την διόρθωση λαθών. Χρησιμοποιήσαμε την κλάσση $Spellchecker$ της $lucene$ για να
-δημιουργήσουμε ευρετήριο στο οποίο θα βρούμε τις πιο συναφείς λέξεις για να προτείνουμε στον χρήστη. Η συνάφεια
+δημιουργήσουμε λεξικό στο οποίο θα βρούμε τις πιο συναφείς λέξεις για να προτείνουμε στον χρήστη. Η συνάφεια
 μετριέται με την χρήση της $Levenstein$ απόστασης.
 }
 \lstset{style=mystyle}
-\begin{lstlisting}
+\begin{lstlisting}[language=Java]
+public void createBusinessSpellIndex() throws IOException {
+    List<String> spellFields = new ArrayList<>(Arrays.asList("name", "tip", "review", "categories"));
+
+    Directory businessesIndexDir = FSDirectory.open(Paths.get(indexDir, "businesses"));
+    DirectoryReader businessIndexReader = DirectoryReader.open(businessesIndexDir);
+
+    for (String field : spellFields) {
+        long startTime = System.currentTimeMillis();
+        System.out.println(">>> Starting business." + field + " spell check indexing");
+
+        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+        indexWriterConfig.setOpenMode(IndexWriterConfig.OpenMode.APPEND);
+        Directory spellCheckDir = FSDirectory.open(Paths.get(indexDir, "spell_check_business"));
+
+        LuceneDictionary dictionary = new LuceneDictionary(businessIndexReader, field);
+        SpellChecker spell = new SpellChecker(spellCheckDir);
+        spell.indexDictionary(dictionary, indexWriterConfig, false);
+        spell.close();
+
+        spellCheckDir.close();
+        double elapsedTimeSec = (System.currentTimeMillis() - startTime) / 1000.0;
+        System.out.println("\tCompleted in " + elapsedTimeSec + "sec");
+    }
+
+    businessIndexReader.close();
+    businessesIndexDir.close();
+}
+
 
 \end{lstlisting}
