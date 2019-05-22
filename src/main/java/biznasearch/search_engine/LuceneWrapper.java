@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.ClassicAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
@@ -39,8 +40,10 @@ public class LuceneWrapper {
     private Directory businessIndex;
     private SpellChecker businessNameSpellChecker;
 
+    private ClassicAnalyzer an = new ClassicAnalyzer();
     public LuceneWrapper(String indexDir, Connection connection) throws IOException {
-        this.analyzer = new StandardAnalyzer();
+        this.analyzer = new StandardAnalyzer(an.getStopwordSet());
+        System.err.println("??? "+an.getStopwordSet());
         this.dbConnection = connection;
         this.indexDir = indexDir;
 

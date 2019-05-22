@@ -7,6 +7,8 @@
     Αν πάλι το ερωτημά μας περιέχει ειδικούς χαρακτήρες και εντολές δημιουργείται $BooleanParser$ ή $PhraseParser$ για
     δυαδικές αναζητήσεις και αναζήτηση ολόκληρης φράσης, λέξης κλειδί αντίστοιχα.
     Η κλάσση $QueryParser$ επιτρέπει επίσης $wildcard$ αναζητήσεις και $term$ $boosting$.
+    Στο ερώτημα μας, όπως και στην δημιουργία του ευρετηρίου χρησιμοποιήσαμε $StandardAnalyzer$ με την προσθήκη των 
+    $default$ $stopWords$ που έχει η $lucene$.
 }
 
 \begin{lstlisting}[language=Java]
@@ -34,7 +36,7 @@ throws ParseException, SQLException, IOException, InvalidTokenOffsetsException {
                 queryText = queryText + "";
                 queryParser = new MultiFieldQueryParser(fields.toArray(new String[fields.size()]), analyzer);
             } else {
-                queryParser = new QueryParser(querySplit[0], new StandardAnalyzer());
+                queryParser = new QueryParser(querySplit[0], new StandardAnalyzer(an.getStopWordSet()));
             }
         } else {
             querySplit = queryText.replaceAll("\\s+", "").split(":");

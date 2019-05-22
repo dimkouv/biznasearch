@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.standard.ClassicAnalyzer;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -32,9 +33,9 @@ public class Indexer {
     private String indexDir;
     private Analyzer analyzer;
     private Connection dbConnection;
-
+    private ClassicAnalyzer an = new ClassicAnalyzer();
     public Indexer(String indexDir, Connection dbConnection) {
-        this.analyzer = new StandardAnalyzer();
+        this.analyzer = new StandardAnalyzer(an.getStopwordSet());
         this.indexDir = indexDir;
         this.dbConnection = dbConnection;
     }
