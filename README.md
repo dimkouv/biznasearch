@@ -18,3 +18,13 @@ a PostgreSQL.
 - Ordering
 - Query suggestions
 - . . .
+
+<img src="media/ui.png" />
+
+
+## Contributors
+<a href="https://github.com/AchilleasAlvaroHysi">
+    Achilleas Alvary Hysi 
+</a> and <a href="https://github.com/dimkouv">
+    Dimitrios N. Kouveris
+</a>

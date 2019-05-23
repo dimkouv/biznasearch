@@ -41,9 +41,9 @@ public class LuceneWrapper {
     private SpellChecker businessNameSpellChecker;
 
     private ClassicAnalyzer an = new ClassicAnalyzer();
+
     public LuceneWrapper(String indexDir, Connection connection) throws IOException {
         this.analyzer = new StandardAnalyzer(an.getStopwordSet());
-        System.err.println("??? "+an.getStopwordSet());
         this.dbConnection = connection;
         this.indexDir = indexDir;
 
