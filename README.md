@@ -24,7 +24,7 @@ a PostgreSQL.
 
 ## Contributors
 <a href="https://github.com/AchilleasAlvaroHysi">
-    Achilleas Alvary Hysi 
+    Achilleas Alvaro Hysi 
 </a> and <a href="https://github.com/dimkouv">
     Dimitrios N. Kouveris
 </a>
