@@ -23,8 +23,8 @@ a PostgreSQL.
 
 
 ## Contributors
-<a href="https://github.com/AchilleasAlvaroHysi">
-    Achilleas Alvaro Hysi 
+<a href="https://github.com/AchilleasAlvaroChysi">
+    Achilleas Alvaro Chysi 
 </a> and <a href="https://github.com/dimkouv">
     Dimitrios N. Kouveris
 </a>
